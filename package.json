@@ -1,13 +1,17 @@
 {
-  "name": "md-portal",
+  "name": "md-coaching-portal-backend",
   "version": "1.0.0",
-  "description": "M&D Exam Portal",
-  "main": "backend/server.js",
+  "description": "Lightweight Express REST API backend for M&D Coaching Portal",
+  "main": "server.js",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node server.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
-  }
+    "mongoose": "^7.5.0"
+  },
+  "author": "Antigravity AI",
+  "license": "ISC"
 }
