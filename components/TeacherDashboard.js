@@ -4,32 +4,57 @@ function TeacherDashboard({ currentUser }) {
     const [dpqs, setDpqs] = React.useState([]);
     const [dpqAttempts, setDpqAttempts] = React.useState([]);
     const [users, setUsers] = React.useState([]);
+    const [messages, setMessages] = React.useState([]);
     const [resultBatchFilter, setResultBatchFilter] = React.useState('All');
 
     React.useEffect(() => {
         async function loadTeacherData() {
             try {
-                const [fetchedExams, fetchedResults, fetchedDpqs, fetchedAttempts, fetchedUsers] = await Promise.all([
+                const [fetchedExams, fetchedResults, fetchedDpqs, fetchedAttempts, fetchedUsers, fetchedMessages] = await Promise.all([
                     api.getExams(),
                     api.getResults(),
                     api.getDpqs(),
                     api.getDpqAttempts(),
-                    api.getUsers()
+                    api.getUsers(),
+                    api.getMessagesForUser(currentUser.id)
                 ]);
                 setExams(fetchedExams);
                 setResults(fetchedResults);
                 setDpqs(fetchedDpqs);
                 setDpqAttempts(fetchedAttempts);
                 setUsers(fetchedUsers);
+                setMessages(fetchedMessages || []);
             } catch (err) {
                 console.error('Failed to load teacher dashboard data:', err);
             }
         }
         loadTeacherData();
+
+        // Real-time polling: refresh messages every 30 seconds
+        const msgInterval = setInterval(async () => {
+            try {
+                const fresh = await api.getMessagesForUser(currentUser.id);
+                setMessages(fresh || []);
+            } catch (e) { /* silent fail */ }
+        }, 30000);
+
+        return () => clearInterval(msgInterval);
     }, []);
 
-    const [activeTab, setActiveTab] = React.useState('overview'); // 'overview' | 'publish_dpq' | 'student_grades'
+    const [activeTab, setActiveTab] = React.useState('overview'); // 'overview' | 'publish_dpq' | 'student_grades' | 'doubts'
     const [successMessage, setSuccessMessage] = React.useState('');
+
+    // Unread message count for teacher
+    const unreadCount = messages.filter(m => m.receiverId == currentUser.id && m.read === false).length;
+
+    const handleOpenDoubts = async () => {
+        setActiveTab('doubts');
+        const unread = messages.filter(m => m.receiverId == currentUser.id && m.read === false);
+        for (const msg of unread) {
+            await api.markMessageRead(msg.id);
+        }
+        setMessages(prev => prev.map(m => m.receiverId == currentUser.id ? { ...m, read: true } : m));
+    };
 
     // Filtered data for teacher's subject
     const subject = currentUser.subject; // e.g. 'Physics', 'Chemistry', 'Mathematics', 'Biology'
@@ -99,6 +124,34 @@ function TeacherDashboard({ currentUser }) {
             copy[idx] = val;
             return copy;
         });
+    };
+
+    const [replyText, setReplyText] = React.useState('');
+    const [replyFile, setReplyFile] = React.useState(null);
+    const [replyFileType, setReplyFileType] = React.useState('');
+
+    const handleReply = async (studentId, studentName) => {
+        if (!replyText && !replyFile) return alert('Please enter a reply or upload a file.');
+        try {
+            const newMsg = {
+                senderId: currentUser.id,
+                senderName: currentUser.name,
+                senderRole: 'teacher',
+                receiverId: studentId,
+                receiverName: studentName,
+                receiverRole: 'student',
+                text: replyText,
+                fileUrl: replyFile,
+                fileType: replyFileType
+            };
+            const saved = await api.sendMessage(newMsg);
+            setMessages(prev => [...prev, saved]);
+            setReplyText('');
+            setReplyFile(null);
+            setReplyFileType('');
+        } catch (err) {
+            alert('Failed to send reply');
+        }
     };
 
     const handleCreateDpqSubmit = async (e) => {
@@ -372,17 +425,54 @@ function TeacherDashboard({ currentUser }) {
                         <button 
                             onClick={() => setActiveTab('student_grades')}
                             style={{
-                                background: activeTab === 'student_grades' ? 'var(--primary-gradient)' : 'transparent',
+                                background: activeTab === 'student_grades' ? 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' : 'transparent',
                                 color: activeTab === 'student_grades' ? 'white' : 'var(--text-muted)',
                                 border: 'none',
                                 padding: '10px 20px',
                                 borderRadius: '12px',
                                 fontWeight: '600',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            <i className="fas fa-users-cog" style={{ marginRight: '8px' }}></i> Student Performance
+                                transition: 'all 0.3s ease',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}>
+                            <i className="fas fa-graduation-cap" style={{ marginRight: '8px' }}></i> Grades
+                        </button>
+                        <button 
+                            onClick={handleOpenDoubts}
+                            style={{
+                                background: activeTab === 'doubts' ? 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' : 'transparent',
+                                color: activeTab === 'doubts' ? 'white' : 'var(--text-muted)',
+                                border: 'none',
+                                padding: '10px 20px',
+                                borderRadius: '12px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                position: 'relative'
+                            }}>
+                            <i className="fas fa-question-circle" style={{ marginRight: '8px' }}></i> Student Doubts
+                            {unreadCount > 0 && (
+                                <span style={{
+                                    position: 'absolute',
+                                    top: '-6px',
+                                    right: '-6px',
+                                    background: '#ef4444',
+                                    color: 'white',
+                                    borderRadius: '50%',
+                                    width: '20px',
+                                    height: '20px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: '800',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 0 8px rgba(239,68,68,0.8)',
+                                    animation: 'pulse 1.5s infinite'
+                                }}>{unreadCount}</span>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -1000,6 +1090,61 @@ function TeacherDashboard({ currentUser }) {
                     </div>
                 )}
 
+                {/* TAB 5: STUDENT DOUBTS */}
+                {activeTab === 'doubts' && (
+                    <div className="animate-fade-in">
+                        <div style={{ marginBottom: '24px' }}>
+                            <h2 style={{ fontSize: '1.8rem', color: 'white' }}>Student Doubts & Messaging</h2>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Reply to student questions with explanations or photo solutions.</p>
+                        </div>
+                        <div className="glass-panel" style={{ padding: '24px', display: 'grid', gap: '20px' }}>
+                            {messages.filter(m => m.receiverId === currentUser.id || m.senderId === currentUser.id).length === 0 ? (
+                                <p style={{ color: 'var(--text-muted)' }}>No doubts received yet.</p>
+                            ) : (
+                                Array.from(new Set(messages.map(m => m.senderId === currentUser.id ? m.receiverId : m.senderId))).map(studentId => {
+                                    const studentName = messages.find(m => m.senderId === studentId || m.receiverId === studentId)?.senderId === studentId ? messages.find(m => m.senderId === studentId).senderName : messages.find(m => m.receiverId === studentId).receiverName;
+                                    const thread = messages.filter(m => (m.senderId === studentId && m.receiverId === currentUser.id) || (m.senderId === currentUser.id && m.receiverId === studentId)).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+                                    return (
+                                        <div key={studentId} style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '16px' }}>
+                                            <h4 style={{ color: 'white', marginTop: 0, marginBottom: '16px' }}><i className="fas fa-user-graduate"></i> Chat with {studentName}</h4>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '400px', overflowY: 'auto', paddingRight: '12px', marginBottom: '16px' }}>
+                                                {thread.map(msg => (
+                                                    <div key={msg.id} style={{ alignSelf: msg.senderId === currentUser.id ? 'flex-end' : 'flex-start', background: msg.senderId === currentUser.id ? 'var(--primary-gradient)' : 'rgba(255,255,255,0.1)', padding: '12px 16px', borderRadius: '12px', maxWidth: '80%' }}>
+                                                        <p style={{ margin: 0, color: 'white', fontSize: '0.95rem' }}>{msg.text}</p>
+                                                        {msg.fileUrl && (
+                                                            <div style={{ marginTop: '8px' }}>
+                                                                <a href={msg.fileUrl} target="_blank" style={{ color: 'white', textDecoration: 'underline', fontSize: '0.85rem' }}><i className="fas fa-paperclip"></i> View Attached File</a>
+                                                            </div>
+                                                        )}
+                                                        <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{new Date(msg.createdAt).toLocaleString()}</small>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
+                                                <textarea className="input-premium" placeholder="Type your reply to the student..." value={replyText} onChange={e => setReplyText(e.target.value)} rows="3"></textarea>
+                                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                    <input type="file" id="replyFile" style={{ display: 'none' }} accept="image/*,.pdf,.doc,.docx" onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (!file) return;
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => { setReplyFile(reader.result); setReplyFileType(file.type.startsWith('image/') ? 'image' : 'document'); };
+                                                        reader.readAsDataURL(file);
+                                                    }} />
+                                                    <label htmlFor="replyFile" className="btn-secondary" style={{ cursor: 'pointer', padding: '8px 16px', fontSize: '0.85rem', margin: 0 }}>
+                                                        <i className="fas fa-upload"></i> {replyFile ? 'File Attached' : 'Attach Solution (Image/PDF)'}
+                                                    </label>
+                                                    <button className="btn-primary" onClick={() => handleReply(studentId, studentName)} style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
+                                                        <i className="fas fa-paper-plane"></i> Send Reply
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
