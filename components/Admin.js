@@ -1,23 +1,26 @@
 function Admin({ currentUser, onSettingsChange }) {
     const [exams, setExams] = React.useState([]);
     const [results, setResults] = React.useState([]);
-    const [activeTab, setActiveTab] = React.useState('overview'); // 'overview' | 'create_exam' | 'create_dpq' | 'results' | 'teachers'
+    const [activeTab, setActiveTab] = React.useState('overview'); // 'overview' | 'create_exam' | 'create_dpq' | 'results' | 'teachers' | 'messages'
     const [users, setUsers] = React.useState([]);
     const [dpqs, setDpqs] = React.useState([]);
     const [dpqAttempts, setDpqAttempts] = React.useState([]);
     const [pyps, setPyps] = React.useState([]);
+    const [messages, setMessages] = React.useState([]);
     const [successMessage, setSuccessMessage] = React.useState('');
 
     React.useEffect(() => {
         async function loadAdminData() {
             try {
-                const [fetchedExams, fetchedResults, fetchedUsers, fetchedDpqs, fetchedAttempts, fetchedPyps] = await Promise.all([
+                const [fetchedExams, fetchedResults, fetchedUsers, fetchedDpqs, fetchedAttempts, fetchedPyps, fetchedSettings, fetchedMessages] = await Promise.all([
                     api.getExams(),
                     api.getResults(),
                     api.getUsers(),
                     api.getDpqs(),
                     api.getDpqAttempts(),
-                    api.getPyps()
+                    api.getPyps(),
+                    api.getSettings(),
+                    api.getMessages()
                 ]);
                 setExams(fetchedExams);
                 setResults(fetchedResults);
@@ -25,6 +28,7 @@ function Admin({ currentUser, onSettingsChange }) {
                 setDpqs(fetchedDpqs);
                 setDpqAttempts(fetchedAttempts);
                 setPyps(fetchedPyps);
+                setMessages(fetchedMessages || []);
             } catch (err) {
                 console.error('Failed to load admin data:', err);
             }
@@ -609,10 +613,29 @@ function Admin({ currentUser, onSettingsChange }) {
                                 borderRadius: '12px',
                                 fontWeight: '600',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.3s ease',
+                                display: 'flex',
+                                alignItems: 'center'
                             }}
                         >
-                            <i className="fas fa-cog" style={{ marginRight: '8px' }}></i> Site Settings
+                            <i className="fas fa-cog" style={{ marginRight: '8px' }}></i> Platform Settings
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('messages')}
+                            style={{
+                                background: activeTab === 'messages' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'transparent',
+                                color: activeTab === 'messages' ? 'white' : 'var(--text-muted)',
+                                border: 'none',
+                                padding: '10px 20px',
+                                borderRadius: '12px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <i className="fas fa-comments" style={{ marginRight: '8px' }}></i> Message Monitor
                         </button>
                     </div>
                 </div>
@@ -1247,6 +1270,53 @@ function Admin({ currentUser, onSettingsChange }) {
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px', alignItems: 'start' }}>
+                            {/* Bulk Upload Card */}
+                            <div className="glass-panel" style={{ padding: '32px', gridColumn: '1 / -1', background: 'linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(59,130,246,0.05) 100%)', border: '1px solid rgba(16,185,129,0.3)' }}>
+                                <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '8px' }}>
+                                    <i className="fas fa-file-excel text-gradient" style={{ marginRight: '8px', color: '#10b981' }}></i> Bulk Upload Students via Excel
+                                </h3>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
+                                    Upload an Excel (.xlsx) or CSV file with columns: <strong style={{color:'white'}}>Name, Username, Password, Batch</strong>
+                                </p>
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <input type="file" id="bulkUploadFile" accept=".xlsx,.csv" style={{ display: 'none' }}
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            try {
+                                                const data = await file.arrayBuffer();
+                                                const wb = XLSX.read(data);
+                                                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                                                let successCount = 0, failCount = 0;
+                                                for (const row of rows) {
+                                                    const name = row['Name'] || row['name'];
+                                                    const username = row['Username'] || row['username'];
+                                                    const password = row['Password'] || row['password'];
+                                                    const batch = row['Batch'] || row['batch'] || 'Class 10';
+                                                    if (!name || !username || !password) { failCount++; continue; }
+                                                    try {
+                                                        await api.createUser({ name, username, password, batch, role: 'student' });
+                                                        successCount++;
+                                                    } catch { failCount++; }
+                                                }
+                                                const freshUsers = await api.getUsers();
+                                                setUsers(freshUsers);
+                                                alert(`✅ Bulk Upload Done!\n${successCount} students created successfully.\n${failCount} rows skipped (missing fields).`);
+                                                e.target.value = '';
+                                            } catch (err) {
+                                                alert('Failed to read Excel file. Make sure it has columns: Name, Username, Password, Batch');
+                                            }
+                                        }}
+                                    />
+                                    <label htmlFor="bulkUploadFile" className="btn-primary" style={{ cursor: 'pointer', padding: '12px 24px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', boxShadow: '0 0 20px rgba(16,185,129,0.3)' }}>
+                                        <i className="fas fa-upload"></i> Choose Excel File & Upload
+                                    </label>
+                                    <a href="data:text/csv;charset=utf-8,Name,Username,Password,Batch%0AJohn Doe,john123,pass123,Class 10%0AJane Smith,jane123,pass456,JEE Advanced 2026" download="student_template.csv" className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.9rem' }}>
+                                        <i className="fas fa-download"></i> Download Template
+                                    </a>
+                                </div>
+                            </div>
+
                             {/* Create Student Form */}
                             <div className="glass-panel" style={{ padding: '32px' }}>
                                 <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '24px' }}>
@@ -1781,6 +1851,39 @@ function Admin({ currentUser, onSettingsChange }) {
                                     <i className="fas fa-save"></i> Save Settings
                                 </button>
                             </form>
+                        </div>
+                    </div>
+                )}
+                {/* TAB 8: MESSAGE MONITOR */}
+                {activeTab === 'messages' && (
+                    <div className="animate-fade-in">
+                        <div style={{ marginBottom: '24px' }}>
+                            <h2 style={{ fontSize: '1.8rem', color: 'white' }}>System-Wide Message Monitor</h2>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Monitor all active student-teacher doubt communications. Messages auto-delete after 7 days.</p>
+                        </div>
+                        <div className="glass-panel" style={{ padding: '24px' }}>
+                            {messages.length === 0 ? (
+                                <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px' }}>No messages have been sent yet.</p>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    {messages.map(msg => (
+                                        <div key={msg.id} style={{ padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', borderLeft: '4px solid #3b82f6' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>{msg.senderName} ({msg.senderRole}) <i className="fas fa-arrow-right mx-2"></i> {msg.receiverName} ({msg.receiverRole})</span>
+                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{new Date(msg.createdAt).toLocaleString()}</span>
+                                            </div>
+                                            <p style={{ color: 'white', margin: '0 0 12px 0' }}>{msg.text}</p>
+                                            {msg.fileUrl && (
+                                                <div>
+                                                    <a href={msg.fileUrl} target="_blank" className="btn-secondary" style={{ padding: '4px 12px', fontSize: '0.85rem', display: 'inline-block' }}>
+                                                        <i className="fas fa-paperclip"></i> View Attached {msg.fileType === 'image' ? 'Image' : 'Document'}
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
