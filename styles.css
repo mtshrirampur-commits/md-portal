@@ -258,3 +258,119 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary-gradient);
 }
+
+/* ===================== PULSE ANIMATION FOR NOTIFICATION BADGE ===================== */
+@keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+    100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+
+/* ===================== MOBILE RESPONSIVE STYLES ===================== */
+@media (max-width: 768px) {
+
+    /* Navbar */
+    .navbar-inner {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+    .navbar-inner h1 {
+        font-size: 1.1rem !important;
+    }
+    .navbar-inner .nav-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Page padding */
+    .page-container,
+    div[style*="max-width: 1280px"] {
+        padding: 0 12px !important;
+    }
+
+    /* Hero/Glass panels */
+    .glass-panel {
+        padding: 20px !important;
+    }
+
+    /* Tab bar - make it scrollable on mobile */
+    div[style*="maxWidth: 'fit-content'"],
+    div[style*="max-width: fit-content"] {
+        max-width: 100% !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap !important;
+        padding-bottom: 4px;
+    }
+
+    /* Tab buttons smaller on mobile */
+    button[style*="padding: '12px 24px'"] {
+        padding: 10px 14px !important;
+        font-size: 0.85rem !important;
+        white-space: nowrap;
+    }
+
+    /* Grid cards: single column on mobile */
+    div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(350px"] ,
+    div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(320px"] ,
+    div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(240px"] ,
+    div[style*="gridTemplateColumns: 'repeat(auto-fill, minmax(350px"] ,
+    div[style*="gridTemplateColumns: 'repeat(auto-fill, minmax(320px"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Two column grids become one */
+    div[style*="gridTemplateColumns: '1fr 2fr'"],
+    div[style*="gridTemplateColumns: 'repeat(2, 1fr)'"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Hero heading sizes */
+    h1[style*="fontSize: '2.5rem'"] { font-size: 1.6rem !important; }
+    h2[style*="fontSize: '1.8rem'"] { font-size: 1.4rem !important; }
+    h2[style*="fontSize: '2rem'"]   { font-size: 1.5rem !important; }
+
+    /* Summary metric cards - side by side on mobile */
+    div[style*="display: 'flex'"][style*="gap: '16px'"] {
+        flex-wrap: wrap;
+    }
+
+    /* Tables - make horizontally scrollable */
+    .glass-panel table {
+        font-size: 0.82rem;
+    }
+    div[style*="overflowX: 'auto'"] {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Exam cards full width */
+    .glass-panel-hover {
+        width: 100%;
+    }
+
+    /* Login card */
+    div[style*="maxWidth: '460px'"] {
+        max-width: 100% !important;
+        margin: 20px 12px !important;
+        padding: 28px 20px !important;
+    }
+
+    /* Bulk upload / form buttons */
+    .btn-primary, .btn-secondary {
+        font-size: 0.9rem;
+        padding: 10px 16px;
+    }
+
+    /* Message chat layout */
+    div[style*="maxWidth: '80%'"] {
+        max-width: 95% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-inner h1 { font-size: 0.95rem !important; }
+    h1[style*="fontSize: '2.5rem'"] { font-size: 1.3rem !important; }
+    .glass-panel { padding: 16px !important; }
+}
