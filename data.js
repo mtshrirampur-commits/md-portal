@@ -527,5 +527,48 @@ const api = {
             console.warn('Failed to update settings:', error);
             return settings;
         }
+    },
+    async getMessages() {
+        try {
+            const response = await fetch(`${API_BASE}/messages`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json();
+        } catch (error) {
+            console.warn('Failed to fetch messages:', error);
+            return [];
+        }
+    },
+    async getMessagesForUser(userId) {
+        try {
+            const response = await fetch(`${API_BASE}/messages/${userId}`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json();
+        } catch (error) {
+            console.warn('Failed to fetch messages for user:', error);
+            return [];
+        }
+    },
+    async sendMessage(msg) {
+        try {
+            const response = await fetch(`${API_BASE}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(msg)
+            });
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json();
+        } catch (error) {
+            console.warn('Failed to send message:', error);
+            return msg;
+        }
+    },
+    async markMessageRead(id) {
+        try {
+            const response = await fetch(`${API_BASE}/messages/${id}/read`, { method: 'PUT' });
+            return await response.json();
+        } catch (error) {
+            console.warn('Failed to mark message read:', error);
+            return { success: false };
+        }
     }
 };
