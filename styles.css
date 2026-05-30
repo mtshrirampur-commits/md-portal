@@ -266,6 +266,14 @@ h1, h2, h3, h4, h5, h6 {
     100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
 }
 
+/* ===================== MOBILE ELEMENT DESKTOP DEFAULTS ===================== */
+.mobile-bottom-nav,
+.mobile-drawer-overlay,
+.mobile-drawer-content,
+.mobile-trigger-container {
+    display: none;
+}
+
 /* ===================== MOBILE RESPONSIVE STYLES ===================== */
 @media (max-width: 768px) {
     /* Hide desktop elements on mobile */
@@ -369,6 +377,7 @@ h1, h2, h3, h4, h5, h6 {
 
     /* Slide-out Mobile Profile Side-Drawer */
     .mobile-drawer-overlay {
+        display: block;
         position: fixed;
         top: 0;
         left: 0;
@@ -618,41 +627,53 @@ h1, h2, h3, h4, h5, h6 {
         padding: 20px !important;
         border-radius: 16px !important;
     }
-
-    /* Mobile Exam Taking Tweaks (OMR Mode) */
-    .exam-mobile-tabs {
-        display: none !important;
-    }
-    .exam-workspace {
-        flex-direction: row;
-    }
-
-    /* Mobile CBT Tweaks (NTA Mode) */
-    .nta-left-pane {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-    .nta-right-pane {
-        width: 320px;
-        display: flex;
-        flex-direction: column;
-    }
-    .nta-grid-overlay {
-        display: none;
-    }
-
-    /* Show mobile-specific classes display defaults */
-    .show-on-mobile-block {
-        display: none !important;
-    }
-    .show-on-mobile-flex {
-        display: none !important;
-    }
 }
 
+/* ===================== PROCTORED EXAM DESKTOP DEFAULTS ===================== */
+.exam-mobile-tabs {
+    display: none !important;
+}
+.exam-workspace {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    overflow: hidden;
+}
+.exam-left-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-glass);
+}
+.exam-right-pane {
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.nta-left-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.nta-right-pane {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+}
+.nta-grid-overlay {
+    display: none !important;
+}
+
+.show-on-mobile-block {
+    display: none !important;
+}
+.show-on-mobile-flex {
+    display: none !important;
+}
+
+/* ===================== PROCTORED EXAM MOBILE OVERRIDES ===================== */
 @media (max-width: 768px) {
-    /* Overlay mobile specific overrides */
     .exam-mobile-tabs {
         display: flex !important;
         width: 100% !important;
@@ -665,6 +686,7 @@ h1, h2, h3, h4, h5, h6 {
         flex: 1 !important;
         display: none !important;
         padding: 12px !important;
+        border-right: none !important;
     }
     .exam-right-pane {
         width: 100% !important;
