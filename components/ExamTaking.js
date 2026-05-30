@@ -131,15 +131,6 @@ function ExamScorecard({ exam, resultData, setIsReviewMode, onFinish, onLogout }
                         >
                             <i className="fas fa-arrow-left"></i> Return to My Dashboard
                         </button>
-                        {onLogout && (
-                            <button 
-                                onClick={() => { onFinish(); onLogout(); }}
-                                className="btn-secondary"
-                                style={{ padding: '16px 36px', fontSize: '1.1rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}
-                            >
-                                <i className="fas fa-sign-out-alt"></i> Logout Portal
-                            </button>
-                        )}
                     </div>
                 </div>
             </div>

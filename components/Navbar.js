@@ -205,25 +205,34 @@ function Navbar({ currentUser, onNavigate, currentPage, onLogout, onOpenLogin, i
                 {/* Mobile Avatar / Login Trigger - Visible only on Mobile */}
                 <div className="mobile-trigger-container" style={{ display: 'none' }}>
                     {currentUser ? (
-                        <div 
-                            onClick={() => setIsDrawerOpen(true)}
-                            style={{
-                                width: '38px',
-                                height: '38px',
-                                borderRadius: '50%',
-                                background: currentUser.role === 'admin' ? 'var(--primary-gradient)' : 'var(--secondary-gradient)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontWeight: '700',
-                                color: 'white',
-                                fontSize: '1rem',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            {currentUser.name.charAt(0)}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div 
+                                onClick={() => setIsDrawerOpen(true)}
+                                style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '50%',
+                                    background: currentUser.role === 'admin' ? 'var(--primary-gradient)' : 'var(--secondary-gradient)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: '700',
+                                    color: 'white',
+                                    fontSize: '0.95rem',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                {currentUser.name.charAt(0)}
+                            </div>
+                            <button 
+                                onClick={onLogout}
+                                className="btn-secondary"
+                                style={{ padding: '6px 10px', fontSize: '0.75rem', minHeight: '32px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                                <i className="fas fa-sign-out-alt"></i> Logout
+                            </button>
                         </div>
                     ) : (
                         <button 
