@@ -314,7 +314,7 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                 </div>
 
                 {/* Sub-Navigation Tab Bar */}
-                <div style={{
+                <div className="hide-on-mobile" style={{
                     display: 'flex',
                     gap: '12px',
                     marginBottom: '40px',
@@ -1388,6 +1388,48 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                     </div>
                 </div>
             )}
+
+            {/* Mobile Bottom Navigation Bar - Visible only on Mobile */}
+            <div className="mobile-bottom-nav">
+                <button 
+                    onClick={() => setActiveTab('tests')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'tests' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-file-alt"></i>
+                    <span>Tests</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('analytics')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-chart-pie"></i>
+                    <span>Analytics</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('leaderboard')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'leaderboard' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-trophy"></i>
+                    <span>Trophy</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('pyp')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'pyp' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-book-open"></i>
+                    <span>PYQs</span>
+                </button>
+                <button 
+                    onClick={handleOpenDoubts}
+                    className={`mobile-bottom-nav-item ${activeTab === 'doubts' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-question-circle"></i>
+                    <span>Doubts</span>
+                    {unreadCount > 0 && (
+                        <span className="mobile-bottom-nav-badge">{unreadCount}</span>
+                    )}
+                </button>
+            </div>
         </div>
     );
 }

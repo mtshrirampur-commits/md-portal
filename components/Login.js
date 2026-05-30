@@ -155,7 +155,7 @@ function Login({ onLogin, onClose, instituteName }) {
                         Demo Access Credentials
                     </span>
 
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button 
                             type="button"
                             onClick={() => handleQuickFill('admin', 'password123')}

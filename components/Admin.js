@@ -497,7 +497,7 @@ function Admin({ currentUser, onSettingsChange }) {
                     </div>
 
                     {/* Action Navigation Tabs */}
-                    <div style={{ display: 'flex', gap: '12px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+                    <div className="hide-on-mobile" style={{ display: 'flex', gap: '12px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
                         <button 
                             onClick={() => setActiveTab('overview')}
                             style={{
@@ -1887,6 +1887,45 @@ function Admin({ currentUser, onSettingsChange }) {
                         </div>
                     </div>
                 )}
+            </div>
+
+            {/* Mobile Bottom Navigation Bar - Visible only on Mobile */}
+            <div className="mobile-bottom-nav">
+                <button 
+                    onClick={() => setActiveTab('overview')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-home"></i>
+                    <span>Overview</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('create_exam')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'create_exam' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-edit"></i>
+                    <span>Exams</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('create_dpq')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'create_dpq' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-plus-circle"></i>
+                    <span>DPPs</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('results')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'results' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-poll"></i>
+                    <span>Results</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('students')}
+                    className={`mobile-bottom-nav-item ${(activeTab === 'students' || activeTab === 'teachers' || activeTab === 'settings' || activeTab === 'messages' || activeTab === 'manage_pyps') ? 'active' : ''}`}
+                >
+                    <i className="fas fa-users-cog"></i>
+                    <span>Control</span>
+                </button>
             </div>
         </div>
     );

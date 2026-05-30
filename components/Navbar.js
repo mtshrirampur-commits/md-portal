@@ -1,4 +1,6 @@
 function Navbar({ currentUser, onNavigate, currentPage, onLogout, onOpenLogin, instituteName }) {
+    const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+
     return (
         <header style={{
             position: 'sticky',
@@ -10,7 +12,7 @@ function Navbar({ currentUser, onNavigate, currentPage, onLogout, onOpenLogin, i
             borderBottom: '1px solid var(--border-glass)',
             padding: '16px 0'
         }}>
-            <div style={{
+            <div className="navbar-inner" style={{
                 maxWidth: '1280px',
                 margin: '0 auto',
                 padding: '0 24px',
@@ -63,8 +65,8 @@ function Navbar({ currentUser, onNavigate, currentPage, onLogout, onOpenLogin, i
                     </div>
                 </div>
 
-                {/* Navigation Links */}
-                <nav style={{
+                {/* Navigation Links - Hidden on Mobile */}
+                <nav className="hide-on-mobile" style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
@@ -152,8 +154,8 @@ function Navbar({ currentUser, onNavigate, currentPage, onLogout, onOpenLogin, i
                     )}
                 </nav>
 
-                {/* User Section / Login */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                {/* User Section / Login - Hidden on Mobile */}
+                <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     {currentUser ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -199,6 +201,124 @@ function Navbar({ currentUser, onNavigate, currentPage, onLogout, onOpenLogin, i
                         </button>
                     )}
                 </div>
+
+                {/* Mobile Avatar / Login Trigger - Visible only on Mobile */}
+                <div className="mobile-trigger-container" style={{ display: 'none' }}>
+                    {currentUser ? (
+                        <div 
+                            onClick={() => setIsDrawerOpen(true)}
+                            style={{
+                                width: '38px',
+                                height: '38px',
+                                borderRadius: '50%',
+                                background: currentUser.role === 'admin' ? 'var(--primary-gradient)' : 'var(--secondary-gradient)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: '700',
+                                color: 'white',
+                                fontSize: '1rem',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            {currentUser.name.charAt(0)}
+                        </div>
+                    ) : (
+                        <button 
+                            onClick={onOpenLogin}
+                            className="btn-primary"
+                            style={{ padding: '8px 14px', fontSize: '0.85rem', minHeight: '36px' }}
+                        >
+                            <i className="fas fa-user-lock"></i> Login
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Slide-out Mobile Side-Drawer Menu */}
+            <div 
+                className={`mobile-drawer-overlay ${isDrawerOpen ? 'open' : ''}`}
+                onClick={() => setIsDrawerOpen(false)}
+            />
+            <div className={`mobile-drawer-content ${isDrawerOpen ? 'open' : ''}`}>
+                <button 
+                    className="mobile-drawer-close"
+                    onClick={() => setIsDrawerOpen(false)}
+                >
+                    <i className="fas fa-times"></i>
+                </button>
+
+                {currentUser && (
+                    <div className="mobile-drawer-profile">
+                        <div className="mobile-drawer-avatar" style={{ background: currentUser.role === 'admin' ? 'var(--primary-gradient)' : 'var(--secondary-gradient)' }}>
+                            {currentUser.name.charAt(0)}
+                        </div>
+                        <h3 className="mobile-drawer-name">{currentUser.name}</h3>
+                        <span className="mobile-drawer-role" style={{ color: currentUser.role === 'admin' ? '#a855f7' : '#3b82f6' }}>
+                            {currentUser.role}
+                        </span>
+                        {currentUser.batch && (
+                            <div className="mobile-drawer-batch">
+                                <i className="fas fa-users" style={{ marginRight: '6px' }}></i>
+                                {currentUser.batch}
+                            </div>
+                        )}
+                        {currentUser.subject && (
+                            <div className="mobile-drawer-batch">
+                                <i className="fas fa-book-open" style={{ marginRight: '6px' }}></i>
+                                {currentUser.subject}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <nav className="mobile-drawer-nav">
+                    <button 
+                        onClick={() => { onNavigate('home'); setIsDrawerOpen(false); }}
+                        className={`mobile-drawer-link ${currentPage === 'home' ? 'active' : ''}`}
+                    >
+                        <i className="fas fa-home"></i> Home
+                    </button>
+
+                    {currentUser && currentUser.role === 'student' && (
+                        <button 
+                            onClick={() => { onNavigate('dashboard'); setIsDrawerOpen(false); }}
+                            className={`mobile-drawer-link ${currentPage === 'dashboard' ? 'active' : ''}`}
+                        >
+                            <i className="fas fa-chart-line"></i> My Dashboard
+                        </button>
+                    )}
+
+                    {currentUser && currentUser.role === 'teacher' && (
+                        <button 
+                            onClick={() => { onNavigate('teacher'); setIsDrawerOpen(false); }}
+                            className={`mobile-drawer-link ${currentPage === 'teacher' ? 'active' : ''}`}
+                        >
+                            <i className="fas fa-chalkboard-teacher"></i> Teacher Portal
+                        </button>
+                    )}
+
+                    {currentUser && currentUser.role === 'admin' && (
+                        <button 
+                            onClick={() => { onNavigate('admin'); setIsDrawerOpen(false); }}
+                            className={`mobile-drawer-link ${currentPage === 'admin' ? 'active' : ''}`}
+                        >
+                            <i className="fas fa-shield-alt"></i> Admin Center
+                        </button>
+                    )}
+
+                    {currentUser && (
+                        <button 
+                            onClick={() => { onLogout(); setIsDrawerOpen(false); }}
+                            className="mobile-drawer-link"
+                            style={{ marginTop: 'auto', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                        >
+                            <i className="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    )}
+                </nav>
             </div>
         </header>
     );

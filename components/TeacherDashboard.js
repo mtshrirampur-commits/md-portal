@@ -376,7 +376,7 @@ function TeacherDashboard({ currentUser }) {
                     </div>
 
                     {/* Navigation tabs */}
-                    <div style={{ display: 'flex', gap: '12px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+                    <div className="hide-on-mobile" style={{ display: 'flex', gap: '12px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
                         <button 
                             onClick={() => setActiveTab('overview')}
                             style={{
@@ -1145,6 +1145,48 @@ function TeacherDashboard({ currentUser }) {
                         </div>
                     </div>
                 )}
+            </div>
+
+            {/* Mobile Bottom Navigation Bar - Visible only on Mobile */}
+            <div className="mobile-bottom-nav">
+                <button 
+                    onClick={() => setActiveTab('overview')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-chart-line"></i>
+                    <span>Overview</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('create_exam')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'create_exam' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-plus-circle"></i>
+                    <span>Exam</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('publish_dpq')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'publish_dpq' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-pencil-alt"></i>
+                    <span>DPP</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('student_grades')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'student_grades' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-graduation-cap"></i>
+                    <span>Grades</span>
+                </button>
+                <button 
+                    onClick={handleOpenDoubts}
+                    className={`mobile-bottom-nav-item ${activeTab === 'doubts' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-question-circle"></i>
+                    <span>Doubts</span>
+                    {unreadCount > 0 && (
+                        <span className="mobile-bottom-nav-badge">{unreadCount}</span>
+                    )}
+                </button>
             </div>
         </div>
     );
