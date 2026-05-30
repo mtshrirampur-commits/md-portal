@@ -618,6 +618,111 @@ h1, h2, h3, h4, h5, h6 {
         padding: 20px !important;
         border-radius: 16px !important;
     }
+
+    /* Mobile Exam Taking Tweaks (OMR Mode) */
+    .exam-mobile-tabs {
+        display: none !important;
+    }
+    .exam-workspace {
+        flex-direction: row;
+    }
+
+    /* Mobile CBT Tweaks (NTA Mode) */
+    .nta-left-pane {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .nta-right-pane {
+        width: 320px;
+        display: flex;
+        flex-direction: column;
+    }
+    .nta-grid-overlay {
+        display: none;
+    }
+
+    /* Show mobile-specific classes display defaults */
+    .show-on-mobile-block {
+        display: none !important;
+    }
+    .show-on-mobile-flex {
+        display: none !important;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Overlay mobile specific overrides */
+    .exam-mobile-tabs {
+        display: flex !important;
+        width: 100% !important;
+    }
+    .exam-workspace {
+        flex-direction: column !important;
+    }
+    .exam-left-pane {
+        width: 100% !important;
+        flex: 1 !important;
+        display: none !important;
+        padding: 12px !important;
+    }
+    .exam-right-pane {
+        width: 100% !important;
+        display: none !important;
+        background: rgba(0,0,0,0.4) !important;
+    }
+    
+    .exam-show-paper .exam-left-pane {
+        display: flex !important;
+    }
+    .exam-show-bubble .exam-right-pane {
+        display: flex !important;
+    }
+
+    /* Mobile NTA CBT overrides */
+    .nta-left-pane {
+        width: 100% !important;
+        flex: 1 !important;
+    }
+    .nta-right-pane {
+        position: fixed !important;
+        top: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 290px !important;
+        height: 100% !important;
+        z-index: 10001 !important;
+        background: #111827 !important;
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.8) !important;
+        border-left: 1px solid var(--border-glass) !important;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        display: flex !important;
+    }
+    .nta-right-pane.open {
+        transform: translateX(0) !important;
+    }
+    .nta-grid-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 10000;
+        display: none;
+    }
+    .nta-grid-overlay.open {
+        display: block !important;
+    }
+    
+    .show-on-mobile-block {
+        display: block !important;
+    }
+    .show-on-mobile-flex {
+        display: flex !important;
+    }
 }
 
 @media (max-width: 480px) {

@@ -1,4 +1,4 @@
-function ExamScorecard({ exam, resultData, setIsReviewMode, onFinish }) {
+function ExamScorecard({ exam, resultData, setIsReviewMode, onFinish, onLogout }) {
     return (
         <div style={{ padding: '40px 0' }}>
             <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px' }}>
@@ -116,7 +116,7 @@ function ExamScorecard({ exam, resultData, setIsReviewMode, onFinish }) {
                         </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button 
                             onClick={() => setIsReviewMode(true)}
                             className="btn-primary"
@@ -131,6 +131,15 @@ function ExamScorecard({ exam, resultData, setIsReviewMode, onFinish }) {
                         >
                             <i className="fas fa-arrow-left"></i> Return to My Dashboard
                         </button>
+                        {onLogout && (
+                            <button 
+                                onClick={() => { onFinish(); onLogout(); }}
+                                className="btn-secondary"
+                                style={{ padding: '16px 36px', fontSize: '1.1rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                            >
+                                <i className="fas fa-sign-out-alt"></i> Logout Portal
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -138,7 +147,7 @@ function ExamScorecard({ exam, resultData, setIsReviewMode, onFinish }) {
     );
 }
 
-function UploadedExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null }) {
+function UploadedExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveResult = null }) {
     // For OMR, we don't need a currentQuestionIndex for navigation, we show all questions in a list.
     const [selectedAnswers, setSelectedAnswers] = React.useState(() => {
         if (retrospectiveResult) {
@@ -160,6 +169,8 @@ function UploadedExamTaking({ exam, currentUser, onFinish, retrospectiveResult =
     const [warnings, setWarnings] = React.useState(0);
     const [showCheatWarning, setShowCheatWarning] = React.useState(false);
     const submitExamRef = React.useRef(null);
+
+    const [mobileTab, setMobileTab] = React.useState('paper'); // 'paper' | 'bubble'
 
     // Timer effect
     React.useEffect(() => {
@@ -328,7 +339,7 @@ function UploadedExamTaking({ exam, currentUser, onFinish, retrospectiveResult =
     }, [isStarted, isSubmitted, isReviewMode, showCheatWarning]);
 
     if (isSubmitted && resultData && !isReviewMode) {
-        return <ExamScorecard exam={exam} resultData={resultData} setIsReviewMode={setIsReviewMode} onFinish={onFinish} />;
+        return <ExamScorecard exam={exam} resultData={resultData} setIsReviewMode={setIsReviewMode} onFinish={onFinish} onLogout={onLogout} />;
     }
 
     if (!isStarted) {
@@ -432,9 +443,51 @@ function UploadedExamTaking({ exam, currentUser, onFinish, retrospectiveResult =
                 </div>
             </div>
 
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+            {/* Mobile Tab Selector - OMR Mode */}
+            <div className="exam-mobile-tabs" style={{ display: 'none', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--border-glass)' }}>
+                <button 
+                    onClick={() => setMobileTab('paper')}
+                    style={{
+                        flex: 1,
+                        padding: '14px',
+                        background: mobileTab === 'paper' ? 'var(--primary-gradient)' : 'transparent',
+                        color: 'white',
+                        border: 'none',
+                        fontWeight: 'bold',
+                        fontSize: '0.95rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    <i className="fas fa-file-alt"></i> Question Paper
+                </button>
+                <button 
+                    onClick={() => setMobileTab('bubble')}
+                    style={{
+                        flex: 1,
+                        padding: '14px',
+                        background: mobileTab === 'bubble' ? 'var(--primary-gradient)' : 'transparent',
+                        color: 'white',
+                        border: 'none',
+                        fontWeight: 'bold',
+                        fontSize: '0.95rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    <i className="fas fa-list-ol"></i> Bubble Sheet ({Object.keys(selectedAnswers).length}/{exam.questions.length})
+                </button>
+            </div>
+
+            <div className={`exam-workspace exam-show-${mobileTab}`} style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                 {/* Left side: Document Viewer */}
-                <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-glass)' }}>
+                <div className="exam-left-pane" style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-glass)' }}>
                     <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRadius: '16px', overflow: 'hidden' }}>
                         <div style={{ background: '#1e293b', padding: '12px 20px', fontWeight: 'bold', borderBottom: '1px solid #334155', display: 'flex', alignItems: 'center', gap: '10px', color: '#e2e8f0' }}>
                             <i className="fas fa-file-alt" style={{ color: '#3b82f6' }}></i> Question Paper Viewer
@@ -459,7 +512,7 @@ function UploadedExamTaking({ exam, currentUser, onFinish, retrospectiveResult =
                 </div>
 
                 {/* Right side: OMR Bubble Sheet */}
-                <div style={{ width: '400px', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.2)' }}>
+                <div className="exam-right-pane" style={{ width: '400px', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.2)' }}>
                     <div style={{ padding: '20px', borderBottom: '1px solid var(--border-glass)' }}>
                         <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <i className="fas fa-list-ol" style={{ color: 'var(--primary-color)' }}></i> OMR Answer Sheet
@@ -520,7 +573,7 @@ function UploadedExamTaking({ exam, currentUser, onFinish, retrospectiveResult =
                         </div>
                     </div>
                     
-                    <div style={{ padding: '20px', borderTop: '1px solid var(--border-glass)', background: 'rgba(0,0,0,0.3)' }}>
+                    <div style={{ padding: '20px', borderTop: '1px solid var(--border-glass)', background: 'rgba(0,0,0,0.3)', marginBottom: window.innerWidth <= 768 ? '20px' : '0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', marginBottom: '12px' }}>
                             <span>Attempted</span>
                             <span>{Object.keys(selectedAnswers).length} / {exam.questions.length}</span>
@@ -549,7 +602,7 @@ function UploadedExamTaking({ exam, currentUser, onFinish, retrospectiveResult =
     );
 }
 
-function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null }) {
+function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveResult = null }) {
     const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
     const [selectedAnswers, setSelectedAnswers] = React.useState(() => {
         if (retrospectiveResult) {
@@ -591,6 +644,8 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
     const [timeSpent, setTimeSpent] = React.useState(() => {
         return new Array(exam.questions.length).fill(0);
     });
+
+    const [isPaletteOpen, setIsPaletteOpen] = React.useState(false); // Mobile CBT Drawer state
 
     // Timer effect
     React.useEffect(() => {
@@ -684,6 +739,7 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
         }
         setQuestionStatuses(newStatuses);
         setCurrentQuestionIndex(idx);
+        setIsPaletteOpen(false); // Close palette drawer on mobile selection
     };
 
     const handleSubmitExam = async (isAutoSubmit = false) => {
@@ -817,7 +873,7 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
     }, [isStarted, isSubmitted, isReviewMode, showCheatWarning]);
 
     if (isSubmitted && resultData && !isReviewMode) {
-        return <ExamScorecard exam={exam} resultData={resultData} setIsReviewMode={setIsReviewMode} onFinish={onFinish} />;
+        return <ExamScorecard exam={exam} resultData={resultData} setIsReviewMode={setIsReviewMode} onFinish={onFinish} onLogout={onLogout} />;
     }
 
     if (!isStarted) {
@@ -886,7 +942,7 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
 
     const ntaStyles = {
         container: { display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', position: 'absolute', top: 0, left: 0, zIndex: 9999, background: '#eef2f6', color: '#333', fontFamily: 'Arial, sans-serif' },
-        header: { display: 'flex', justifyContent: 'space-between', padding: '10px 20px', background: '#2c3e50', color: 'white', borderBottom: '4px solid #f39c12' },
+        header: { display: 'flex', justifyContent: 'space-between', padding: '10px 20px', background: '#2c3e50', color: 'white', borderBottom: '4px solid #f39c12', alignItems: 'center' },
         mainArea: { display: 'flex', flex: 1, overflow: 'hidden' },
         leftPane: { flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid #ccc', background: 'white' },
         rightPane: { width: '320px', display: 'flex', flexDirection: 'column', background: '#e6f0fa', borderLeft: '2px solid #aec2d8' },
@@ -902,7 +958,7 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
     };
 
     return (
-        <div style={ntaStyles.container}>
+        <div className="nta-container" style={ntaStyles.container}>
             {showCheatWarning && warnings <= 3 && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div className="glass-panel" style={{ padding: '40px', maxWidth: '500px', textAlign: 'center', border: '2px solid #ef4444', background: '#111827' }}>
@@ -930,11 +986,33 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
                     {isReviewMode && <span style={{ background: '#f39c12', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', color: '#fff' }}>Review Mode</span>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    
+                    {/* Mobile Grid Toggle Trigger */}
+                    <button 
+                        className="show-on-mobile-block"
+                        onClick={() => setIsPaletteOpen(true)}
+                        style={{
+                            display: 'none',
+                            background: 'rgba(255, 255, 255, 0.15)',
+                            border: '1px solid rgba(255, 255, 255, 0.25)',
+                            color: 'white',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.85rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            marginRight: '8px'
+                        }}
+                    >
+                        <i className="fas fa-th"></i> Grid
+                    </button>
+
                     <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.9rem', color: '#bbb' }}>Time Left</div>
-                        <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: timeLeft <= 300 ? '#e74c3c' : 'white' }}>{formatTime(timeLeft)}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#bbb' }}>Time Left</div>
+                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: timeLeft <= 300 ? '#e74c3c' : 'white' }}>{formatTime(timeLeft)}</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    
+                    <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ background: '#ecf0f1', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2c3e50' }}>
                             <i className="fas fa-user"></i>
                         </div>
@@ -944,7 +1022,7 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
             </div>
 
             <div style={ntaStyles.mainArea}>
-                <div style={ntaStyles.leftPane}>
+                <div className="nta-left-pane" style={ntaStyles.leftPane}>
                     <div style={ntaStyles.qHeader}>
                         <h3 style={{ margin: 0, color: '#333', fontSize: '1.1rem' }}>Question No. {currentQuestionIndex + 1}</h3>
                         <span style={{ fontWeight: 'bold', color: '#2c3e50' }}>Marks: {activeQuestion.marks}</span>
@@ -995,17 +1073,17 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
                         )}
                     </div>
 
-                    {!isReviewMode && (
+                    {/* Standard control actions footer bar */}
+                    {!isReviewMode ? (
                         <div style={ntaStyles.bottomBar}>
-                            <div style={{ display: 'flex', gap: '10px' }}>
+                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                 <button style={ntaStyles.btnSaveNext} onClick={handleSaveAndNext}>Save & Next</button>
-                                <button style={ntaStyles.btnClear} onClick={handleClearResponse}>Clear Response</button>
-                                <button style={ntaStyles.btnSaveMark} onClick={handleSaveAndMarkReview}>Save & Mark for Review</button>
-                                <button style={ntaStyles.btnMarkNext} onClick={handleMarkReviewAndNext}>Mark for Review & Next</button>
+                                <button style={ntaStyles.btnClear} onClick={handleClearResponse}>Clear</button>
+                                <button style={ntaStyles.btnSaveMark} onClick={handleSaveAndMarkReview}>Save & Mark Review</button>
+                                <button style={ntaStyles.btnMarkNext} onClick={handleMarkReviewAndNext}>Mark Review & Next</button>
                             </div>
                         </div>
-                    )}
-                    {isReviewMode && (
+                    ) : (
                         <div style={ntaStyles.bottomBar}>
                              <div style={{ display: 'flex', gap: '10px', width: '100%', justifyContent: 'space-between' }}>
                                 <button 
@@ -1027,7 +1105,25 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
                     )}
                 </div>
 
-                <div style={ntaStyles.rightPane}>
+                {/* Mobile Grid Drawer Backdrop Overlay */}
+                <div 
+                    className={`nta-grid-overlay ${isPaletteOpen ? 'open' : ''}`}
+                    onClick={() => setIsPaletteOpen(false)}
+                />
+
+                {/* Right side Question palette pane */}
+                <div className={`nta-right-pane ${isPaletteOpen ? 'open' : ''}`} style={ntaStyles.rightPane}>
+                    {/* Mobile Close Button */}
+                    <div className="show-on-mobile-flex" style={{ display: 'none', justifyContent: 'flex-end', padding: '10px 15px', background: '#dce7f3', borderBottom: '1px solid #ccc' }}>
+                        <button 
+                            onClick={() => setIsPaletteOpen(false)}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                        >
+                            <i className="fas fa-times"></i> Close Grid
+                        </button>
+                    </div>
+
                     <div style={{ padding: '15px', background: 'white', borderBottom: '1px solid #ccc' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -1093,7 +1189,7 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
 
                     {!isReviewMode ? (
                         <button style={ntaStyles.submitBtn} onClick={() => setShowSummaryModal(true)}>
-                            Submit
+                            Submit Exam
                         </button>
                     ) : (
                         <button style={{...ntaStyles.submitBtn, background: '#337ab7'}} onClick={onFinish}>
@@ -1105,11 +1201,11 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
 
             {showSummaryModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }}>
-                    <div style={{ background: 'white', width: '500px', borderRadius: '8px', overflow: 'hidden', color: '#333', fontFamily: 'Arial' }}>
+                    <div style={{ background: 'white', width: '90%', maxWidth: '500px', borderRadius: '8px', overflow: 'hidden', color: '#333', fontFamily: 'Arial' }}>
                         <div style={{ background: '#2c3e50', color: 'white', padding: '15px 20px', fontSize: '1.2rem', fontWeight: 'bold' }}>
                             Exam Summary
                         </div>
-                        <div style={{ padding: '20px' }}>
+                        <div style={{ padding: '20px', maxHeight: '70vh', overflowY: 'auto' }}>
                             <p style={{ marginBottom: '20px' }}>Please review your exam summary before final submission:</p>
                             <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
                                 <tbody>
@@ -1139,7 +1235,7 @@ function NTAExamTaking({ exam, currentUser, onFinish, retrospectiveResult = null
                                     </tr>
                                 </tbody>
                             </table>
-                            <p style={{ color: '#d9534f', fontWeight: 'bold' }}>Are you sure you want to submit for final marking?</p>
+                            <p style={{ color: '#d9534f', fontWeight: 'bold', margin: 0 }}>Are you sure you want to submit for final marking?</p>
                         </div>
                         <div style={{ padding: '15px 20px', background: '#f5f5f5', display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #ccc' }}>
                             <button onClick={() => setShowSummaryModal(false)} style={{ padding: '10px 20px', border: '1px solid #ccc', background: 'white', borderRadius: '4px', cursor: 'pointer' }}>No, Go Back</button>
