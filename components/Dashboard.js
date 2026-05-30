@@ -5,16 +5,20 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     const [dpqAttempts, setDpqAttempts] = React.useState([]);
     const [allResults, setAllResults] = React.useState([]);
     const [pyps, setPyps] = React.useState([]);
+    const [messages, setMessages] = React.useState([]);
+    const [users, setUsers] = React.useState([]);
     
     React.useEffect(() => {
         async function loadDashboardData() {
             try {
-                const [fetchedExams, fetchedResults, fetchedDpqs, fetchedAttempts, fetchedPyps] = await Promise.all([
+                const [fetchedExams, fetchedResults, fetchedDpqs, fetchedAttempts, fetchedPyps, fetchedMessages, fetchedUsers] = await Promise.all([
                     api.getExams(),
                     api.getResults(),
                     api.getDpqs(),
                     api.getDpqAttempts(),
-                    api.getPyps()
+                    api.getPyps(),
+                    api.getMessagesForUser(currentUser.id),
+                    api.getUsers()
                 ]);
                 setExams(fetchedExams.filter(e => e.assignedBatch === currentUser.batch));
                 setAllResults(fetchedResults);
@@ -22,11 +26,23 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                 setDpqs(fetchedDpqs.filter(d => d.homeworkForBatch === currentUser.batch));
                 setDpqAttempts(fetchedAttempts);
                 setPyps(fetchedPyps);
+                setMessages(fetchedMessages || []);
+                setUsers(fetchedUsers.filter(u => u.role === 'teacher'));
             } catch (err) {
                 console.error('Failed to load student dashboard data:', err);
             }
         }
         loadDashboardData();
+
+        // Real-time polling: refresh messages every 30 seconds
+        const msgInterval = setInterval(async () => {
+            try {
+                const fresh = await api.getMessagesForUser(currentUser.id);
+                setMessages(fresh || []);
+            } catch (e) { /* silent fail */ }
+        }, 30000);
+
+        return () => clearInterval(msgInterval);
     }, [currentUser.id, currentUser.batch]);
     
     // UI states for DPQ modal/drawer
@@ -35,7 +51,20 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     const [isDpqSubmitted, setIsDpqSubmitted] = React.useState(false);
 
     // Navigation Tab state
-    const [activeTab, setActiveTab] = React.useState('tests'); // 'tests' | 'analytics' | 'leaderboard' | 'pyp'
+    const [activeTab, setActiveTab] = React.useState('tests'); // 'tests' | 'analytics' | 'leaderboard' | 'pyp' | 'doubts'
+
+    // Unread message count
+    const unreadCount = messages.filter(m => m.receiverId == currentUser.id && m.read === false).length;
+
+    const handleOpenDoubts = async () => {
+        setActiveTab('doubts');
+        // Mark all received messages as read
+        const unread = messages.filter(m => m.receiverId == currentUser.id && m.read === false);
+        for (const msg of unread) {
+            await api.markMessageRead(msg.id);
+        }
+        setMessages(prev => prev.map(m => m.receiverId == currentUser.id ? { ...m, read: true } : m));
+    };
 
     // Previous Year Papers state
     const [pypExamFilter, setPypExamFilter] = React.useState('all');
@@ -52,7 +81,6 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
             alert('Please select an option.');
             return;
         }
-
         const isCorrect = selectedDpqOption === dpq.correctOption;
         const newAttempt = {
             id: 'dpq-att-' + Date.now(),
@@ -60,15 +88,45 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
             studentId: currentUser.id,
             selectedOption: selectedDpqOption,
             correct: isCorrect,
-            date: new Date().toLocaleDateString()
+            date: new Date().toISOString()
         };
-
         try {
             const savedAttempt = await api.submitDpqAttempt(newAttempt);
             setDpqAttempts(prev => [savedAttempt, ...prev]);
             setIsDpqSubmitted(true);
         } catch (err) {
-            alert('Failed to submit practice homework to server.');
+            alert('Failed to submit attempt');
+        }
+    };
+
+    const [messageText, setMessageText] = React.useState('');
+    const [selectedTeacherId, setSelectedTeacherId] = React.useState('');
+    const [messageFile, setMessageFile] = React.useState(null);
+    const [messageFileType, setMessageFileType] = React.useState('');
+
+    const handleSendMessage = async () => {
+        if (!selectedTeacherId) return alert('Please select a teacher.');
+        if (!messageText && !messageFile) return alert('Please enter a message or upload a file.');
+        try {
+            const teacher = users.find(u => u.id === selectedTeacherId);
+            const newMsg = {
+                senderId: currentUser.id,
+                senderName: currentUser.name,
+                senderRole: 'student',
+                receiverId: teacher.id,
+                receiverName: teacher.name,
+                receiverRole: 'teacher',
+                text: messageText,
+                fileUrl: messageFile,
+                fileType: messageFileType
+            };
+            const saved = await api.sendMessage(newMsg);
+            setMessages(prev => [...prev, saved]);
+            setMessageText('');
+            setMessageFile(null);
+            setMessageFileType('');
+        } catch (err) {
+            alert('Failed to send message');
         }
     };
 
@@ -293,6 +351,33 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                         style={{ padding: '12px 24px', borderRadius: '12px', border: activeTab === 'pyp' ? 'none' : '1px solid transparent', background: activeTab === 'pyp' ? 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)' : '' }}
                     >
                         <i className="fas fa-book-open"></i> Previous Year Questions
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('doubts')} 
+                        className={activeTab === 'doubts' ? 'btn-primary' : 'btn-secondary'}
+                        style={{ padding: '12px 24px', borderRadius: '12px', border: activeTab === 'doubts' ? 'none' : '1px solid transparent', background: activeTab === 'doubts' ? 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' : '', position: 'relative' }}
+                        onClick={handleOpenDoubts}
+                    >
+                        <i className="fas fa-question-circle"></i> Doubts & Chat
+                        {unreadCount > 0 && (
+                            <span style={{
+                                position: 'absolute',
+                                top: '-6px',
+                                right: '-6px',
+                                background: '#ef4444',
+                                color: 'white',
+                                borderRadius: '50%',
+                                width: '20px',
+                                height: '20px',
+                                fontSize: '0.72rem',
+                                fontWeight: '800',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 0 8px rgba(239,68,68,0.8)',
+                                animation: 'pulse 1.5s infinite'
+                            }}>{unreadCount}</span>
+                        )}
                     </button>
                 </div>
 
@@ -1220,15 +1305,89 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                     <div style={{ marginTop:'40px', padding:'20px 24px', background:'rgba(99,102,241,0.08)', border:'1px solid rgba(99,102,241,0.25)', borderRadius:'14px', display:'flex', alignItems:'flex-start', gap:'14px' }}>
                         <i className="fas fa-circle-info" style={{ color:'#818cf8', fontSize:'1.2rem', marginTop:'2px', flexShrink:0 }}></i>
                         <div>
-                            <p style={{ color:'white', fontWeight:'600', marginBottom:'4px', fontSize:'0.95rem' }}>How to access the papers</p>
-                            <p style={{ color:'var(--text-muted)', margin:0, fontSize:'0.88rem', lineHeight:'1.6' }}>
+                            <p style={{ color: 'white', fontWeight: '600', marginBottom: '4px', fontSize: '0.95rem' }}>How to access the papers</p>
+                            <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.88rem', lineHeight: '1.6' }}>
                                 Click <strong style={{ color:'#818cf8' }}>"Access Papers"</strong> to open the official NTA or CET Cell portal in a new tab. Navigate to the <em>Question Paper</em> / <em>Downloads</em> section on that site and select the year &amp; session. Papers are freely available on the official websites without login for past years.
                             </p>
                         </div>
                     </div>
                 </div>
             )}
+            {/* TAB 5: DOUBTS & CHAT */}
+            {activeTab === 'doubts' && (
+                <div className="animate-fade-in">
+                    <div className="glass-panel" style={{ padding: '40px', marginBottom: '36px' }}>
+                        <h2 style={{ fontSize: '2rem', color: 'white', marginBottom: '8px' }}>Ask a Doubt</h2>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '1rem', maxWidth: '600px', marginBottom: '24px' }}>
+                            Connect directly with your academy's subject teachers. Ask questions, get detailed explanations, and receive image/PDF solutions.
+                        </p>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '32px' }}>
+                            {/* Send Message Form */}
+                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '24px', borderRadius: '16px' }}>
+                                <h3 style={{ color: 'white', marginTop: 0, marginBottom: '20px' }}>New Question</h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div>
+                                        <label style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>Select Teacher</label>
+                                        <select className="input-premium" value={selectedTeacherId} onChange={e => setSelectedTeacherId(e.target.value)}>
+                                            <option value="">-- Choose Instructor --</option>
+                                            {users.map(t => <option key={t.id} value={t.id}>{t.name} ({t.subject})</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>Your Doubt</label>
+                                        <textarea className="input-premium" placeholder="Explain what you need help with..." value={messageText} onChange={e => setMessageText(e.target.value)} rows="4"></textarea>
+                                    </div>
+                                    <div>
+                                        <label style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>Attach File (Optional)</label>
+                                        <input type="file" id="studentFile" style={{ display: 'none' }} accept="image/*,.pdf,.doc,.docx" onChange={(e) => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => { setMessageFile(reader.result); setMessageFileType(file.type.startsWith('image/') ? 'image' : 'document'); };
+                                            reader.readAsDataURL(file);
+                                        }} />
+                                        <label htmlFor="studentFile" className="btn-secondary" style={{ cursor: 'pointer', display: 'block', textAlign: 'center' }}>
+                                            <i className="fas fa-upload"></i> {messageFile ? 'File Attached' : 'Upload Image/PDF'}
+                                        </label>
+                                    </div>
+                                    <button className="btn-primary" onClick={handleSendMessage} style={{ marginTop: '8px' }}>
+                                        <i className="fas fa-paper-plane"></i> Send Message
+                                    </button>
+                                </div>
+                            </div>
 
+                            {/* Message History */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '600px', overflowY: 'auto', paddingRight: '8px' }}>
+                                <h3 style={{ color: 'white', marginTop: 0, marginBottom: '4px' }}>Doubt History</h3>
+                                {messages.length === 0 ? (
+                                    <div style={{ padding: '32px', textAlign: 'center', background: 'rgba(0,0,0,0.2)', borderRadius: '16px' }}>
+                                        <i className="fas fa-comments" style={{ fontSize: '3rem', color: 'rgba(255,255,255,0.1)', marginBottom: '16px' }}></i>
+                                        <p style={{ color: 'var(--text-muted)', margin: 0 }}>You haven't asked any doubts yet.</p>
+                                    </div>
+                                ) : (
+                                    messages.map(msg => (
+                                        <div key={msg.id} style={{ background: msg.senderId === currentUser.id ? 'var(--primary-gradient)' : 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', alignSelf: msg.senderId === currentUser.id ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', gap: '16px' }}>
+                                                <span style={{ color: 'white', fontWeight: 'bold' }}>{msg.senderId === currentUser.id ? 'You' : msg.senderName + ' (' + msg.senderRole + ')'}</span>
+                                                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem' }}>{new Date(msg.createdAt).toLocaleString()}</span>
+                                            </div>
+                                            <p style={{ margin: 0, color: 'white', fontSize: '0.95rem' }}>{msg.text}</p>
+                                            {msg.fileUrl && (
+                                                <div style={{ marginTop: '12px' }}>
+                                                    <a href={msg.fileUrl} target="_blank" className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'inline-block', background: 'rgba(0,0,0,0.3)', border: 'none' }}>
+                                                        <i className="fas fa-paperclip"></i> View Attached {msg.fileType === 'image' ? 'Image' : 'Document'}
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
