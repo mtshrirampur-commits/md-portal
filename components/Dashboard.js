@@ -53,6 +53,12 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     // Navigation Tab state
     const [activeTab, setActiveTab] = React.useState('tests'); // 'tests' | 'analytics' | 'leaderboard' | 'pyp' | 'doubts'
 
+    // Filtering, sorting and view modes for tests
+    const [testViewMode, setTestViewMode] = React.useState('table'); // 'table' | 'grid'
+    const [testSearch, setTestSearch] = React.useState('');
+    const [testSubjectFilter, setTestSubjectFilter] = React.useState('all');
+    const [testSortKey, setTestSortKey] = React.useState('date'); // 'date' | 'title' | 'marks' | 'duration'
+
     // Unread message count
     const unreadCount = messages.filter(m => m.receiverId == currentUser.id && m.read === false).length;
 
@@ -396,11 +402,89 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                                 </span>
                             </div>
 
+                            <div className="glass-panel" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
+                                {/* Search and Filter Inputs */}
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', flex: 1, minWidth: '300px' }}>
+                                    <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+                                        <i className="fas fa-search" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}></i>
+                                        <input 
+                                            type="text" 
+                                            className="input-premium" 
+                                            placeholder="Search tests..." 
+                                            value={testSearch}
+                                            onChange={e => setTestSearch(e.target.value)}
+                                            style={{ paddingLeft: '40px', paddingRight: '14px', height: '42px', fontSize: '0.9rem' }}
+                                        />
+                                    </div>
+                                    <select 
+                                        className="input-premium" 
+                                        value={testSubjectFilter} 
+                                        onChange={e => setTestSubjectFilter(e.target.value)}
+                                        style={{ width: '160px', height: '42px', fontSize: '0.9rem', padding: '0 12px', background: '#111827' }}
+                                    >
+                                        <option value="all">All Subjects</option>
+                                        {Array.from(new Set(exams.map(e => e.subject).filter(Boolean))).map(sub => (
+                                            <option key={sub} value={sub}>{sub}</option>
+                                        ))}
+                                    </select>
+                                    <select 
+                                        className="input-premium" 
+                                        value={testSortKey} 
+                                        onChange={e => setTestSortKey(e.target.value)}
+                                        style={{ width: '160px', height: '42px', fontSize: '0.9rem', padding: '0 12px', background: '#111827' }}
+                                    >
+                                        <option value="date">Sort by Date</option>
+                                        <option value="title">Sort by Name</option>
+                                        <option value="marks">Sort by Marks</option>
+                                        <option value="duration">Sort by Duration</option>
+                                    </select>
+                                </div>
+                                {/* View Toggle Buttons */}
+                                <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '10px', border: '1px solid var(--border-glass)' }}>
+                                    <button 
+                                        onClick={() => setTestViewMode('table')} 
+                                        style={{ border: 'none', background: testViewMode === 'table' ? 'var(--primary-gradient)' : 'transparent', color: 'white', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '600' }}
+                                    >
+                                        <i className="fas fa-list"></i> Table View
+                                    </button>
+                                    <button 
+                                        onClick={() => setTestViewMode('grid')} 
+                                        style={{ border: 'none', background: testViewMode === 'grid' ? 'var(--primary-gradient)' : 'transparent', color: 'white', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '600' }}
+                                    >
+                                        <i className="fas fa-th-large"></i> Grid View
+                                    </button>
+                                </div>
+                            </div>
+
                             {(() => {
                                 const now = new Date();
+                                
+                                // Filter exams
+                                const filteredExams = exams.filter(exam => {
+                                    const matchSearch = exam.title.toLowerCase().includes(testSearch.toLowerCase()) || 
+                                                        (exam.description && exam.description.toLowerCase().includes(testSearch.toLowerCase()));
+                                    const matchSubject = testSubjectFilter === 'all' || exam.subject === testSubjectFilter;
+                                    return matchSearch && matchSubject;
+                                });
+
+                                // Sort exams
+                                const sortedExams = [...filteredExams].sort((a, b) => {
+                                    if (testSortKey === 'title') {
+                                        return a.title.localeCompare(b.title);
+                                    } else if (testSortKey === 'marks') {
+                                        return b.totalMarks - a.totalMarks;
+                                    } else if (testSortKey === 'duration') {
+                                        return b.durationMinutes - a.durationMinutes;
+                                    } else {
+                                        const dateA = a.scheduledDate ? new Date(a.scheduledDate) : new Date(0);
+                                        const dateB = b.scheduledDate ? new Date(b.scheduledDate) : new Date(0);
+                                        return dateB - dateA;
+                                    }
+                                });
+
                                 const activeExams = [];
                                 const upcomingExams = [];
-                                exams.forEach(e => {
+                                sortedExams.forEach(e => {
                                     if (e.scheduledDate && new Date(e.scheduledDate) > now) {
                                         upcomingExams.push(e);
                                     } else {
@@ -410,95 +494,198 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
 
                                 return (
                                     <>
-                                        {upcomingExams.length > 0 && (
-                                            <div style={{ marginBottom: '40px' }}>
-                                                <h3 style={{ fontSize: '1.4rem', color: '#fbbf24', marginBottom: '16px' }}><i className="fas fa-calendar-alt"></i> Upcoming Scheduled Tests</h3>
-                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
-                                                    {upcomingExams.map(exam => (
-                                                        <div key={exam.id} className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
-                                                            <div>
-                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                                                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white' }}>{exam.subject}</span>
-                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                                                                        <span><i className="fas fa-stopwatch" style={{ color: '#a855f7' }}></i> {exam.durationMinutes}m</span>
-                                                                        <span><i className="fas fa-award" style={{ color: '#f59e0b' }}></i> {exam.totalMarks} pts</span>
-                                                                    </div>
-                                                                </div>
-                                                                <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '12px', lineHeight: '1.3' }}>{exam.title}</h3>
-                                                                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '24px' }}>{exam.description}</p>
-                                                            </div>
-                                                            <div>
-                                                                <button disabled className="btn-secondary" style={{ width: '100%', padding: '14px', fontSize: '1.05rem', justifyContent: 'center', opacity: 0.7, cursor: 'not-allowed' }}>
-                                                                    <i className="fas fa-lock"></i> Available on {new Date(exam.scheduledDate).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {activeExams.length > 0 && (
-                                            <div>
-                                                <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '16px' }}>Active Tests</h3>
-                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
-                                                    {activeExams.map(exam => {
-                                                        const pastAttempt = results.find(r => r.examId === exam.id);
-                                                        return (
-                                                            <div key={exam.id} className="glass-panel glass-panel-hover" style={{ padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                                                <div>
-                                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                                                                        <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white' }}>
-                                                                            {exam.subject}
+                                        {testViewMode === 'table' ? (
+                                            <div className="glass-panel" style={{ overflow: 'hidden', border: '1px solid var(--border-glass)' }}>
+                                                <div style={{ overflowX: 'auto' }}>
+                                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                                                        <thead>
+                                                            <tr style={{ background: 'rgba(0,0,0,0.4)', borderBottom: '1px solid var(--border-glass)' }}>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Test Details</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '140px' }}>Subject</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '120px' }}>Duration</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '110px' }}>Marks</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '220px' }}>Status</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '180px' }}>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {/* Render upcoming first if any */}
+                                                            {upcomingExams.map(exam => (
+                                                                <tr key={exam.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                                    <td style={{ padding: '18px 20px' }}>
+                                                                        <strong style={{ color: '#fbbf24', fontSize: '1rem', display: 'block', marginBottom: '4px' }}>{exam.title}</strong>
+                                                                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{exam.description}</span>
+                                                                    </td>
+                                                                    <td style={{ padding: '18px 20px' }}>
+                                                                        <span className="badge" style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)' }}>{exam.subject}</span>
+                                                                    </td>
+                                                                    <td style={{ padding: '18px 20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                                                        <i className="fas fa-stopwatch" style={{ marginRight: '6px' }}></i> {exam.durationMinutes} mins
+                                                                    </td>
+                                                                    <td style={{ padding: '18px 20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                                                        <i className="fas fa-award" style={{ marginRight: '6px' }}></i> {exam.totalMarks} pts
+                                                                    </td>
+                                                                    <td style={{ padding: '18px 20px' }}>
+                                                                        <span style={{ color: '#fbbf24', fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                            <i className="fas fa-calendar-alt"></i> Scheduled
                                                                         </span>
-                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                                                                            <span><i className="fas fa-stopwatch" style={{ color: '#a855f7' }}></i> {exam.durationMinutes}m</span>
-                                                                            <span><i className="fas fa-award" style={{ color: '#f59e0b' }}></i> {exam.totalMarks} pts</span>
-                                                                        </div>
-                                                                    </div>
-                    
-                                                                    <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '12px', lineHeight: '1.3' }}>
-                                                                        {exam.title}
-                                                                    </h3>
-                                                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '24px' }}>
-                                                                        {exam.description}
-                                                                    </p>
-                                                                </div>
-                    
-                                                                <div>
-                                                                    {pastAttempt ? (
-                                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', marginBottom: '16px' }}>
-                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                                <i className="fas fa-check-circle" style={{ color: pastAttempt.passed ? '#10b981' : '#ef4444' }}></i>
-                                                                                <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>Last Score: {pastAttempt.score}/{pastAttempt.totalMarks}</span>
-                                                                            </div>
-                                                                            <span className={`badge ${pastAttempt.passed ? 'badge-success' : 'badge-danger'}`}>
-                                                                                {pastAttempt.passed ? 'Passed' : 'Failed'}
-                                                                            </span>
-                                                                        </div>
-                                                                    ) : null}
-                    
-                                                                    <button 
-                                                                        onClick={() => onStartExam(exam)}
-                                                                        className="btn-primary"
-                                                                        style={{ width: '100%', padding: '14px', fontSize: '1.05rem', justifyContent: 'center' }}
-                                                                    >
-                                                                        <i className="fas fa-play-circle"></i> {pastAttempt ? 'Retake Examination' : 'Start Examination Now'}
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
+                                                                    </td>
+                                                                    <td style={{ padding: '18px 20px' }}>
+                                                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                                                            Starts {new Date(exam.scheduledDate).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                                                        </span>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                            {/* Render active exams */}
+                                                            {activeExams.map(exam => {
+                                                                const pastAttempt = results.find(r => r.examId === exam.id);
+                                                                return (
+                                                                    <tr key={exam.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: pastAttempt ? 'rgba(0,0,0,0.1)' : 'transparent' }}>
+                                                                        <td style={{ padding: '18px 20px' }}>
+                                                                            <strong style={{ color: 'white', fontSize: '1rem', display: 'block', marginBottom: '4px' }}>{exam.title}</strong>
+                                                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{exam.description}</span>
+                                                                        </td>
+                                                                        <td style={{ padding: '18px 20px' }}>
+                                                                            <span className="badge" style={{ background: 'rgba(255,255,255,0.08)', color: 'white' }}>{exam.subject}</span>
+                                                                        </td>
+                                                                        <td style={{ padding: '18px 20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                                                            <i className="fas fa-stopwatch" style={{ marginRight: '6px', color: '#a855f7' }}></i> {exam.durationMinutes} mins
+                                                                        </td>
+                                                                        <td style={{ padding: '18px 20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                                                            <i className="fas fa-award" style={{ marginRight: '6px', color: '#f59e0b' }}></i> {exam.totalMarks} pts
+                                                                        </td>
+                                                                        <td style={{ padding: '18px 20px' }}>
+                                                                            {pastAttempt ? (
+                                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                                    <i className="fas fa-check-circle" style={{ color: pastAttempt.passed ? '#10b981' : '#ef4444' }}></i>
+                                                                                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: pastAttempt.passed ? '#10b981' : '#ef4444' }}>
+                                                                                        {pastAttempt.score}/{pastAttempt.totalMarks} ({pastAttempt.passed ? 'Passed' : 'Failed'})
+                                                                                    </span>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                                                                                    Not Attempted
+                                                                                </span>
+                                                                            )}
+                                                                        </td>
+                                                                        <td style={{ padding: '18px 20px' }}>
+                                                                            <button 
+                                                                                onClick={() => onStartExam(exam)}
+                                                                                className="btn-primary"
+                                                                                style={{ padding: '8px 16px', fontSize: '0.85rem', minHeight: '36px', borderRadius: '8px', width: '100%', justifyContent: 'center' }}
+                                                                            >
+                                                                                <i className="fas fa-play-circle" style={{ marginRight: '4px' }}></i> {pastAttempt ? 'Retake' : 'Start Exam'}
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                            {sortedExams.length === 0 && (
+                                                                <tr>
+                                                                    <td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                                                        <i className="fas fa-search" style={{ fontSize: '2rem', marginBottom: '12px', display: 'block', color: 'rgba(255,255,255,0.1)' }}></i>
+                                                                        No tests match your search filters.
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
                                                 </div>
                                             </div>
-                                        )}
+                                        ) : (
+                                            <>
+                                                {upcomingExams.length > 0 && (
+                                                    <div style={{ marginBottom: '40px' }}>
+                                                        <h3 style={{ fontSize: '1.4rem', color: '#fbbf24', marginBottom: '16px' }}><i className="fas fa-calendar-alt"></i> Upcoming Scheduled Tests</h3>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
+                                                            {upcomingExams.map(exam => (
+                                                                <div key={exam.id} className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
+                                                                    <div>
+                                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                                                            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white' }}>{exam.subject}</span>
+                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                                                                <span><i className="fas fa-stopwatch" style={{ color: '#a855f7' }}></i> {exam.durationMinutes}m</span>
+                                                                                <span><i className="fas fa-award" style={{ color: '#f59e0b' }}></i> {exam.totalMarks} pts</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '12px', lineHeight: '1.3' }}>{exam.title}</h3>
+                                                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '24px' }}>{exam.description}</p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <button disabled className="btn-secondary" style={{ width: '100%', padding: '14px', fontSize: '1.05rem', justifyContent: 'center', opacity: 0.7, cursor: 'not-allowed' }}>
+                                                                            <i className="fas fa-lock"></i> Available on {new Date(exam.scheduledDate).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
 
-                                        {activeExams.length === 0 && upcomingExams.length === 0 && (
-                                            <div className="glass-panel" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                                                <i className="fas fa-clipboard-list" style={{ fontSize: '3rem', marginBottom: '16px', color: 'rgba(255,255,255,0.2)' }}></i>
-                                                <h3 style={{ color: 'white', marginBottom: '8px' }}>No exams available</h3>
-                                                <p>There are no active or scheduled tests for your batch currently.</p>
-                                            </div>
+                                                {activeExams.length > 0 && (
+                                                    <div>
+                                                        <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '16px' }}>Active Tests</h3>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
+                                                            {activeExams.map(exam => {
+                                                                const pastAttempt = results.find(r => r.examId === exam.id);
+                                                                return (
+                                                                    <div key={exam.id} className="glass-panel glass-panel-hover" style={{ padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                                                        <div>
+                                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                                                                <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white' }}>
+                                                                                    {exam.subject}
+                                                                                </span>
+                                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                                                                    <span><i className="fas fa-stopwatch" style={{ color: '#a855f7' }}></i> {exam.durationMinutes}m</span>
+                                                                                    <span><i className="fas fa-award" style={{ color: '#f59e0b' }}></i> {exam.totalMarks} pts</span>
+                                                                                </div>
+                                                                            </div>
+                                            
+                                                                            <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '12px', lineHeight: '1.3' }}>
+                                                                                {exam.title}
+                                                                            </h3>
+                                                                            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '24px' }}>
+                                                                                {exam.description}
+                                                                            </p>
+                                                                        </div>
+                                            
+                                                                        <div>
+                                                                            {pastAttempt ? (
+                                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', marginBottom: '16px' }}>
+                                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                                        <i className="fas fa-check-circle" style={{ color: pastAttempt.passed ? '#10b981' : '#ef4444' }}></i>
+                                                                                        <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>Last Score: {pastAttempt.score}/{pastAttempt.totalMarks}</span>
+                                                                                    </div>
+                                                                                    <span className={`badge ${pastAttempt.passed ? 'badge-success' : 'badge-danger'}`}>
+                                                                                        {pastAttempt.passed ? 'Passed' : 'Failed'}
+                                                                                    </span>
+                                                                                </div>
+                                                                            ) : null}
+                                            
+                                                                            <button 
+                                                                                onClick={() => onStartExam(exam)}
+                                                                                className="btn-primary"
+                                                                                style={{ width: '100%', padding: '14px', fontSize: '1.05rem', justifyContent: 'center' }}
+                                                                            >
+                                                                                <i className="fas fa-play-circle"></i> {pastAttempt ? 'Retake Examination' : 'Start Examination Now'}
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {activeExams.length === 0 && upcomingExams.length === 0 && (
+                                                    <div className="glass-panel" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                                        <i className="fas fa-clipboard-list" style={{ fontSize: '3rem', marginBottom: '16px', color: 'rgba(255,255,255,0.2)' }}></i>
+                                                        <h3 style={{ color: 'white', marginBottom: '8px' }}>No exams available</h3>
+                                                        <p>There are no active or scheduled tests for your batch currently.</p>
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
                                     </>
                                 );

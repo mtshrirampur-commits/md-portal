@@ -9,6 +9,12 @@ function Admin({ currentUser, onSettingsChange }) {
     const [messages, setMessages] = React.useState([]);
     const [successMessage, setSuccessMessage] = React.useState('');
 
+    // Admin exam listing states
+    const [adminExamSearch, setAdminExamSearch] = React.useState('');
+    const [adminExamSubjectFilter, setAdminExamSubjectFilter] = React.useState('all');
+    const [adminExamSortKey, setAdminExamSortKey] = React.useState('date'); // 'date' | 'title' | 'marks'
+    const [adminExamViewMode, setAdminExamViewMode] = React.useState('table'); // 'table' | 'grid'
+
     React.useEffect(() => {
         async function loadAdminData() {
             try {
@@ -716,55 +722,216 @@ function Admin({ currentUser, onSettingsChange }) {
 
                         {/* Exam Directory list */}
                         <div style={{ marginBottom: '32px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                                <h2 style={{ fontSize: '1.8rem', color: 'white' }}>Manage Existing Exams</h2>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+                                <h2 style={{ fontSize: '1.8rem', color: 'white', margin: 0 }}>Manage Existing Exams</h2>
                                 <button onClick={() => setActiveTab('create_exam')} className="btn-primary" style={{ padding: '10px 20px', fontSize: '0.95rem' }}>
                                     <i className="fas fa-plus"></i> Add New Exam
                                 </button>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
-                                {exams.map(exam => {
-                                    const examResults = results.filter(r => r.examId === exam.id);
-                                    return (
-                                        <div key={exam.id} className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                            <div>
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white' }}>{exam.subject}</span>
-                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                                        <i className="fas fa-question-circle"></i> {exam.questions.length} questions
-                                                    </span>
-                                                </div>
-                                                <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '12px' }}>{exam.title}</h3>
-                                                <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '24px' }}>{exam.description}</p>
-                                            </div>
-
-                                            <div style={{ padding: '16px', background: 'rgba(0,0,0,0.3)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                <div>
-                                                    <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Submissions</span>
-                                                    <span style={{ fontSize: '1.2rem', fontWeight: '700', color: 'white' }}>{examResults.length} students</span>
-                                                </div>
-                                                <button 
-                                                    onClick={async () => {
-                                                        if (window.confirm(`Delete exam "${exam.title}"?`)) {
-                                                            try {
-                                                                await api.deleteExam(exam.id);
-                                                                setExams(prev => prev.filter(e => e.id !== exam.id));
-                                                            } catch (err) {
-                                                                alert('Failed to delete exam.');
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="btn-danger"
-                                                    style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-                                                >
-                                                    <i className="fas fa-trash"></i> Delete
-                                                </button>
-                                           </div>
-                                        </div>
-                                    );
-                                })}
+                            <div className="glass-panel" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
+                                {/* Search and Filter Inputs */}
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', flex: 1, minWidth: '300px' }}>
+                                    <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+                                        <i className="fas fa-search" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}></i>
+                                        <input 
+                                            type="text" 
+                                            className="input-premium" 
+                                            placeholder="Search exams..." 
+                                            value={adminExamSearch}
+                                            onChange={e => setAdminExamSearch(e.target.value)}
+                                            style={{ paddingLeft: '40px', paddingRight: '14px', height: '42px', fontSize: '0.9rem' }}
+                                        />
+                                    </div>
+                                    <select 
+                                        className="input-premium" 
+                                        value={adminExamSubjectFilter} 
+                                        onChange={e => setAdminExamSubjectFilter(e.target.value)}
+                                        style={{ width: '160px', height: '42px', fontSize: '0.9rem', padding: '0 12px', background: '#111827' }}
+                                    >
+                                        <option value="all">All Subjects</option>
+                                        {Array.from(new Set(exams.map(e => e.subject).filter(Boolean))).map(sub => (
+                                            <option key={sub} value={sub}>{sub}</option>
+                                        ))}
+                                    </select>
+                                    <select 
+                                        className="input-premium" 
+                                        value={adminExamSortKey} 
+                                        onChange={e => setAdminExamSortKey(e.target.value)}
+                                        style={{ width: '160px', height: '42px', fontSize: '0.9rem', padding: '0 12px', background: '#111827' }}
+                                    >
+                                        <option value="date">Sort by Date</option>
+                                        <option value="title">Sort by Name</option>
+                                        <option value="marks">Sort by Marks</option>
+                                        <option value="questions">Sort by Questions</option>
+                                    </select>
+                                </div>
+                                {/* View Toggle Buttons */}
+                                <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '10px', border: '1px solid var(--border-glass)' }}>
+                                    <button 
+                                        onClick={() => setAdminExamViewMode('table')} 
+                                        style={{ border: 'none', background: adminExamViewMode === 'table' ? 'var(--primary-gradient)' : 'transparent', color: 'white', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '600' }}
+                                    >
+                                        <i className="fas fa-list"></i> Table View
+                                    </button>
+                                    <button 
+                                        onClick={() => setAdminExamViewMode('grid')} 
+                                        style={{ border: 'none', background: adminExamViewMode === 'grid' ? 'var(--primary-gradient)' : 'transparent', color: 'white', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '600' }}
+                                    >
+                                        <i className="fas fa-th-large"></i> Grid View
+                                    </button>
+                                </div>
                             </div>
+
+                            {(() => {
+                                // Filter exams
+                                const filteredExams = exams.filter(exam => {
+                                    const matchSearch = exam.title.toLowerCase().includes(adminExamSearch.toLowerCase()) || 
+                                                        (exam.description && exam.description.toLowerCase().includes(adminExamSearch.toLowerCase()));
+                                    const matchSubject = adminExamSubjectFilter === 'all' || exam.subject === adminExamSubjectFilter;
+                                    return matchSearch && matchSubject;
+                                });
+
+                                // Sort exams
+                                const sortedExams = [...filteredExams].sort((a, b) => {
+                                    if (adminExamSortKey === 'title') {
+                                        return a.title.localeCompare(b.title);
+                                    } else if (adminExamSortKey === 'marks') {
+                                        return b.totalMarks - a.totalMarks;
+                                    } else if (adminExamSortKey === 'questions') {
+                                        return b.questions.length - a.questions.length;
+                                    } else {
+                                        return b.id.localeCompare(a.id);
+                                    }
+                                });
+
+                                return (
+                                    <>
+                                        {adminExamViewMode === 'table' ? (
+                                            <div className="glass-panel" style={{ overflow: 'hidden', border: '1px solid var(--border-glass)' }}>
+                                                <div style={{ overflowX: 'auto' }}>
+                                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                                                        <thead>
+                                                            <tr style={{ background: 'rgba(0,0,0,0.4)', borderBottom: '1px solid var(--border-glass)' }}>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Exam Details</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '140px' }}>Subject</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '120px' }}>Questions</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '110px' }}>Marks</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '180px' }}>Batch</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '140px' }}>Submissions</th>
+                                                                <th style={{ padding: '16px 20px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '140px' }}>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {sortedExams.map(exam => {
+                                                                const examResults = results.filter(r => r.examId === exam.id);
+                                                                return (
+                                                                    <tr key={exam.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
+                                                                        <td style={{ padding: '16px 20px' }}>
+                                                                            <strong style={{ color: 'white', fontSize: '0.95rem', display: 'block', marginBottom: '4px' }}>{exam.title}</strong>
+                                                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{exam.description}</span>
+                                                                        </td>
+                                                                        <td style={{ padding: '16px 20px' }}>
+                                                                            <span className="badge" style={{ background: 'rgba(255,255,255,0.08)', color: 'white' }}>{exam.subject}</span>
+                                                                        </td>
+                                                                        <td style={{ padding: '16px 20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                                                            <i className="fas fa-question-circle" style={{ marginRight: '6px', color: '#a855f7' }}></i> {exam.questions ? exam.questions.length : 0} Qs
+                                                                        </td>
+                                                                        <td style={{ padding: '16px 20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                                                            <i className="fas fa-award" style={{ marginRight: '6px', color: '#f59e0b' }}></i> {exam.totalMarks} pts
+                                                                        </td>
+                                                                        <td style={{ padding: '16px 20px', color: 'white', fontSize: '0.88rem' }}>
+                                                                            {exam.assignedBatch || 'All Batches'}
+                                                                        </td>
+                                                                        <td style={{ padding: '16px 20px', color: 'white', fontSize: '0.88rem' }}>
+                                                                            <span className="badge badge-success">{examResults.length} submissions</span>
+                                                                        </td>
+                                                                        <td style={{ padding: '16px 20px' }}>
+                                                                            <button 
+                                                                                onClick={async () => {
+                                                                                    if (window.confirm(`Delete exam "${exam.title}"?`)) {
+                                                                                        try {
+                                                                                            await api.deleteExam(exam.id);
+                                                                                            setExams(prev => prev.filter(e => e.id !== exam.id));
+                                                                                        } catch (err) {
+                                                                                            alert('Failed to delete exam.');
+                                                                                        }
+                                                                                    }
+                                                                                }}
+                                                                                className="btn-danger"
+                                                                                style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: '32px' }}
+                                                                            >
+                                                                                <i className="fas fa-trash"></i> Delete
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                            {sortedExams.length === 0 && (
+                                                                <tr>
+                                                                    <td colSpan="7" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                                                        <i className="fas fa-search" style={{ fontSize: '2rem', marginBottom: '12px', display: 'block', color: 'rgba(255,255,255,0.1)' }}></i>
+                                                                        No exams match your search filters.
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
+                                                {sortedExams.map(exam => {
+                                                    const examResults = results.filter(r => r.examId === exam.id);
+                                                    return (
+                                                        <div key={exam.id} className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                                            <div>
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white' }}>{exam.subject}</span>
+                                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                                        <i className="fas fa-question-circle"></i> {exam.questions.length} questions
+                                                                    </span>
+                                                                </div>
+                                                                <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '12px' }}>{exam.title}</h3>
+                                                                <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '24px' }}>{exam.description}</p>
+                                                            </div>
+
+                                                            <div style={{ padding: '16px', background: 'rgba(0,0,0,0.3)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                                <div>
+                                                                    <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Submissions</span>
+                                                                    <span style={{ fontSize: '1.2rem', fontWeight: '700', color: 'white' }}>{examResults.length} students</span>
+                                                                </div>
+                                                                <button 
+                                                                    onClick={async () => {
+                                                                        if (window.confirm(`Delete exam "${exam.title}"?`)) {
+                                                                            try {
+                                                                                await api.deleteExam(exam.id);
+                                                                                setExams(prev => prev.filter(e => e.id !== exam.id));
+                                                                            } catch (err) {
+                                                                                alert('Failed to delete exam.');
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    className="btn-danger"
+                                                                    style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                                                                >
+                                                                    <i className="fas fa-trash"></i> Delete
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                                {sortedExams.length === 0 && (
+                                                    <div className="glass-panel" style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>
+                                                        <i className="fas fa-search" style={{ fontSize: '2rem', marginBottom: '12px', display: 'block', color: 'rgba(255,255,255,0.1)' }}></i>
+                                                        No exams match your search filters.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </div>
 
                         {/* DPQ Directory List */}
