@@ -757,3 +757,161 @@ h1, h2, h3, h4, h5, h6 {
     .glass-panel { padding: 12px !important; }
     .mobile-drawer-content { width: 260px; }
 }
+
+/* ==========================================================================
+   ACADEMY LEADERBOARD PODIUM, GLOWING BORDERS & ANALYTICS STYLING POLISH
+   ========================================================================== */
+
+/* Bounce animation for crown and podium icons */
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.podium-bounce {
+    animation: bounce 2.5s ease-in-out infinite;
+}
+
+/* Leaderboard custom gradients */
+.text-gold {
+    background: linear-gradient(135deg, #FFE082 0%, #FFB300 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+
+.text-silver {
+    background: linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+
+.text-bronze {
+    background: linear-gradient(135deg, #FFB74D 0%, #E65100 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+
+/* Glowing card borders for podium places */
+@keyframes borderGlowGold {
+    0%, 100% { border-color: rgba(251, 191, 36, 0.3); box-shadow: 0 0 15px rgba(251, 191, 36, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+    50% { border-color: rgba(251, 191, 36, 0.6); box-shadow: 0 0 25px rgba(251, 191, 36, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
+}
+
+@keyframes borderGlowSilver {
+    0%, 100% { border-color: rgba(148, 163, 184, 0.2); box-shadow: 0 0 12px rgba(148, 163, 184, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+    50% { border-color: rgba(148, 163, 184, 0.5); box-shadow: 0 0 20px rgba(148, 163, 184, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+}
+
+@keyframes borderGlowBronze {
+    0%, 100% { border-color: rgba(180, 83, 9, 0.2); box-shadow: 0 0 12px rgba(180, 83, 9, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+    50% { border-color: rgba(180, 83, 9, 0.5); box-shadow: 0 0 20px rgba(180, 83, 9, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+}
+
+.glow-gold {
+    animation: borderGlowGold 3s ease-in-out infinite;
+}
+
+.glow-silver {
+    animation: borderGlowSilver 3s ease-in-out infinite;
+}
+
+.glow-bronze {
+    animation: borderGlowBronze 3s ease-in-out infinite;
+}
+
+/* General Podium Card */
+.podium-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.podium-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-25deg);
+    transition: none;
+}
+
+.podium-card:hover {
+    transform: translateY(-8px) scale(1.02);
+}
+
+.podium-card:hover::before {
+    animation: shine 1.2s ease-in-out;
+}
+
+@keyframes shine {
+    100% {
+        left: 200%;
+    }
+}
+
+/* Table sorting indicator & headers styling */
+.table-sort-header {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+}
+
+.table-sort-header:hover {
+    color: white !important;
+}
+
+/* Premium recommendation card */
+.guidance-box-premium {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.04) 100%);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 10px 25px -10px rgba(168, 85, 247, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.guidance-box-premium::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+    pointer-events: none;
+}
+
+/* Topic accuracy badges */
+.topic-accuracy-high {
+    color: var(--success-color);
+    background: var(--success-bg);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.topic-accuracy-medium {
+    color: var(--warning-color);
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.topic-accuracy-low {
+    color: var(--danger-color);
+    background: var(--danger-bg);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}

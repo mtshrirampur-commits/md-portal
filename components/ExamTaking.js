@@ -1,4 +1,34 @@
 function ExamScorecard({ exam, resultData, setIsReviewMode, onFinish, onLogout }) {
+    // Calculate Topic-level Mastery for this exam
+    const getExamTopicAnalytics = () => {
+        if (!exam || !exam.questions || !resultData || !resultData.answers) return [];
+        const topicStats = {};
+        
+        exam.questions.forEach((q, index) => {
+            const topic = q.topic || 'General';
+            if (!topicStats[topic]) {
+                topicStats[topic] = {
+                    topicName: topic,
+                    totalQuestions: 0,
+                    correctQuestions: 0
+                };
+            }
+            topicStats[topic].totalQuestions += 1;
+            const userAns = resultData.answers[index] !== undefined ? resultData.answers[index] : -1;
+            if (userAns === q.correctOption) {
+                topicStats[topic].correctQuestions += 1;
+            }
+        });
+        
+        return Object.values(topicStats).map(stat => {
+            const accuracy = (stat.correctQuestions / stat.totalQuestions) * 100;
+            return {
+                ...stat,
+                accuracy
+            };
+        });
+    };
+
     return (
         <div style={{ padding: '40px 0' }}>
             <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px' }}>
@@ -113,8 +143,74 @@ function ExamScorecard({ exam, resultData, setIsReviewMode, onFinish, onLogout }
                                     );
                                 })}
                             </div>
-                        </div>
-                    )}
+                    {/* Topic-Level conceptual feedback */}
+                    {(() => {
+                        const topicAnalytics = getExamTopicAnalytics();
+                        if (topicAnalytics.length === 0) return null;
+                        
+                        const weakTopics = topicAnalytics.filter(t => t.accuracy < 50);
+                        const strongTopics = topicAnalytics.filter(t => t.accuracy >= 70);
+                        
+                        return (
+                            <div className="glass-panel animate-fade-in" style={{ marginTop: '32px', padding: '36px', textAlign: 'left', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-glass)', marginBottom: '32px' }}>
+                                <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <i className="fas fa-bullseye text-gradient"></i> Conceptual Topic Breakdown
+                                </h3>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>
+                                    Your accuracy performance mapped to distinct chapters in this test paper.
+                                </p>
+                                
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '28px' }}>
+                                    {topicAnalytics.map(t => {
+                                        let barColor = 'var(--warning-color)';
+                                        let statusColor = 'var(--warning-color)';
+                                        if (t.accuracy >= 70) {
+                                            barColor = 'var(--success-color)';
+                                            statusColor = 'var(--success-color)';
+                                        } else if (t.accuracy < 50) {
+                                            barColor = 'var(--danger-color)';
+                                            statusColor = 'var(--danger-color)';
+                                        }
+                                        
+                                        return (
+                                            <div key={t.topicName} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                                                    <span style={{ fontWeight: '600', color: 'white' }}>{t.topicName}</span>
+                                                    <span style={{ fontWeight: 'bold', color: statusColor }}>{t.accuracy.toFixed(0)}% ({t.correctQuestions}/{t.totalQuestions} Qs)</span>
+                                                </div>
+                                                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                    <div style={{ width: `${t.accuracy}%`, height: '100%', background: barColor, borderRadius: '3px' }}></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Dynamic Advice/Guidance Box */}
+                                <div style={{ background: 'rgba(255,255,255,0.01)', padding: '18px', borderRadius: '12px', borderLeft: `4px solid ${weakTopics.length > 0 ? 'var(--danger-color)' : 'var(--success-color)'}` }}>
+                                    {weakTopics.length > 0 ? (
+                                        <div>
+                                            <h5 style={{ margin: '0 0 6px 0', color: 'var(--danger-color)', fontWeight: '700', fontSize: '0.95rem' }}>
+                                                <i className="fas fa-exclamation-triangle" style={{ marginRight: '6px' }}></i> Concept Study Recommendation
+                                            </h5>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                                                You need to focus on <strong>{weakTopics.map(w => w.topicName).join(', ')}</strong> where accuracy was below 50%. We highly suggest reviewing the solutions to these specific questions in detail and working on related practice DPPs to build strength!
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <h5 style={{ margin: '0 0 6px 0', color: 'var(--success-color)', fontWeight: '700', fontSize: '0.95rem' }}>
+                                                <i className="fas fa-graduation-cap" style={{ marginRight: '6px' }}></i> Excellent Conceptual Control!
+                                            </h5>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                                                Spectacular work! You have shown solid command across all exam topics. Continue this excellent academy momentum in upcoming challenges!
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button 

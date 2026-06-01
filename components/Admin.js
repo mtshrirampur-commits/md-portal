@@ -56,6 +56,10 @@ function Admin({ currentUser, onSettingsChange }) {
     const [studentFilter, setStudentFilter] = React.useState('All');
     const [resultBatchFilter, setResultBatchFilter] = React.useState('All');
     
+    // Test-Specific Leaderboard states for Admin
+    const [selectedLeaderboardExamId, setSelectedLeaderboardExamId] = React.useState('exam-thermo-shm');
+    const [expandedStudentResultId, setExpandedStudentResultId] = React.useState(null);
+    
     const [settings, setSettings] = React.useState({
         instituteName: "MAHESH & DHUMAL ACADEMICS",
         contactNumbers: "",
@@ -397,7 +401,7 @@ function Admin({ currentUser, onSettingsChange }) {
     const handleAddQuestion = () => {
         setQuestions(prev => [
             ...prev,
-            { questionText: '', options: ['', '', '', ''], correctOption: 0, marks: 10, solutionExplanation: '' }
+            { questionText: '', options: ['', '', '', ''], correctOption: 0, marks: 10, solutionExplanation: '', topic: '' }
         ]);
     };
 
@@ -449,7 +453,8 @@ function Admin({ currentUser, onSettingsChange }) {
                 options: q.options.map(o => o.trim()),
                 correctOption: Number(q.correctOption),
                 marks: Number(q.marks),
-                solutionExplanation: q.solutionExplanation.trim() || 'No explanation provided.'
+                solutionExplanation: q.solutionExplanation.trim() || 'No explanation provided.',
+                topic: (q.topic || 'General').trim()
             }))
         };
 
@@ -463,13 +468,68 @@ function Admin({ currentUser, onSettingsChange }) {
             setAdminExamCreationMode('manual');
             setAdminExamFileUrl('');
             setAdminExamFileType('');
-            setQuestions([{ questionText: '', options: ['', '', '', ''], correctOption: 0, marks: 10, solutionExplanation: '' }]);
+            setQuestions([{ questionText: '', options: ['', '', '', ''], correctOption: 0, marks: 10, solutionExplanation: '', topic: '' }]);
 
             setTimeout(() => setSuccessMessage(''), 5000);
             setActiveTab('overview');
         } catch (err) {
             alert('Failed to save the new exam to server.');
         }
+    };
+
+    // Calculate Test-Specific Leaderboard rankings for Admin
+    const getTestLeaderboard = (examId) => {
+        if (!examId) return [];
+        const examResults = results.filter(r => r.examId === examId);
+        const studentMap = {};
+        
+        examResults.forEach(res => {
+            const currentBest = studentMap[res.studentId];
+            if (!currentBest || res.score > currentBest.score) {
+                studentMap[res.studentId] = {
+                    name: res.studentName,
+                    score: res.score,
+                    totalMarks: res.totalMarks,
+                    percentage: res.percentage,
+                    passed: res.passed,
+                    date: res.date
+                };
+            }
+        });
+        
+        return Object.values(studentMap).sort((a, b) => b.score - a.score);
+    };
+
+    // Calculate Student Topic Analytics for Admin
+    const getStudentTopicAnalytics = (res) => {
+        if (!res) return [];
+        const exam = exams.find(e => e.id === res.examId);
+        if (!exam || !exam.questions) return [];
+        
+        const topicStats = {};
+        exam.questions.forEach((q, index) => {
+            const topic = q.topic || 'General';
+            if (!topicStats[topic]) {
+                topicStats[topic] = {
+                    topicName: topic,
+                    totalQuestions: 0,
+                    correctQuestions: 0
+                };
+            }
+            topicStats[topic].totalQuestions += 1;
+            const userAns = res.answers && res.answers[index] !== undefined ? res.answers[index] : -1;
+            if (userAns === q.correctOption) {
+                topicStats[topic].correctQuestions += 1;
+            }
+        });
+        
+        return Object.values(topicStats).map(stat => {
+            const accuracy = (stat.correctQuestions / stat.totalQuestions) * 100;
+            return {
+                ...stat,
+                accuracy
+            };
+        });
     };
 
     // Calculate metrics
@@ -1181,10 +1241,22 @@ function Admin({ currentUser, onSettingsChange }) {
                                                      <input 
                                                          type="number"
                                                          className="input-premium"
-                                                         style={{ width: '150px' }}
+                                                         style={{ width: '130px' }}
                                                          min="1"
                                                          value={q.marks}
                                                          onChange={e => handleQuestionChange(qIdx, 'marks', e.target.value)}
+                                                         required
+                                                     />
+                                                 </div>
+                                                 <div>
+                                                     <label className="input-label">Topic / Concept</label>
+                                                     <input 
+                                                         type="text"
+                                                         className="input-premium"
+                                                         style={{ width: '220px' }}
+                                                         placeholder="e.g. Thermodynamics, Friction"
+                                                         value={q.topic || ''}
+                                                         onChange={e => handleQuestionChange(qIdx, 'topic', e.target.value)}
                                                          required
                                                      />
                                                  </div>
@@ -1352,6 +1424,69 @@ function Admin({ currentUser, onSettingsChange }) {
                                 </div>
                             </div>
 
+                            {/* Test-Specific Leaderboard for Admins */}
+                            <div className="glass-panel" style={{ padding: '32px', marginBottom: '32px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', marginBottom: '24px' }}>
+                                    <div>
+                                        <h3 style={{ fontSize: '1.3rem', color: 'white', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                                            <i className="fas fa-trophy text-gradient"></i> Mock Evaluation Leaderboard
+                                        </h3>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: '4px', margin: 0 }}>
+                                            View the 1st, 2nd, and 3rd podium finishers for a specific test.
+                                        </p>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <label style={{ color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.9rem' }}>Select Test:</label>
+                                        <select 
+                                            className="input-premium" 
+                                            value={selectedLeaderboardExamId} 
+                                            onChange={e => setSelectedLeaderboardExamId(e.target.value)}
+                                            style={{ width: 'auto', background: '#0b0f19', display: 'inline-block', minWidth: '240px', padding: '8px 16px', margin: 0 }}
+                                        >
+                                            {exams.filter(e => results.some(r => r.examId === e.id)).map(e => (
+                                                <option key={e.id} value={e.id}>{e.title}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {(() => {
+                                    const rankData = getTestLeaderboard(selectedLeaderboardExamId);
+                                    if (rankData.length === 0) {
+                                        return <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0', margin: 0 }}>No submissions recorded for this test.</p>;
+                                    }
+                                    const podium = rankData.slice(0, 3);
+                                    return (
+                                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: '20px', flexWrap: 'wrap-reverse', margin: '12px 0' }}>
+                                            {podium[1] && (
+                                                <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)', padding: '16px 20px', borderRadius: '16px', textAlign: 'center', width: '170px' }}>
+                                                    <div style={{ fontSize: '1.8rem', color: '#cbd5e1', marginBottom: '6px' }}><i className="fas fa-award"></i></div>
+                                                    <h5 style={{ margin: '0 0 4px 0', color: 'white', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{podium[1].name}</h5>
+                                                    <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 'bold' }}>2nd Place</span>
+                                                    <span style={{ display: 'block', fontSize: '0.85rem', color: '#a855f7', fontWeight: '700', marginTop: '6px' }}>{podium[1].score}/{podium[1].totalMarks} pts ({podium[1].percentage.toFixed(1)}%)</span>
+                                                </div>
+                                            )}
+                                            {podium[0] && (
+                                                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(251,191,36,0.3)', padding: '24px 20px', borderRadius: '16px', textAlign: 'center', width: '195px', boxShadow: '0 0 20px rgba(251,191,36,0.1)' }}>
+                                                    <div style={{ fontSize: '2.5rem', color: '#fbbf24', marginBottom: '8px' }}><i className="fas fa-crown"></i></div>
+                                                    <h5 style={{ margin: '0 0 4px 0', color: 'white', fontSize: '1.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{podium[0].name}</h5>
+                                                    <span style={{ fontSize: '0.8rem', color: '#fbbf24', fontWeight: 'extrabold' }}>1st Place</span>
+                                                    <span style={{ display: 'block', fontSize: '0.95rem', color: '#10b981', fontWeight: '800', marginTop: '6px' }}>{podium[0].score}/{podium[0].totalMarks} pts ({podium[0].percentage.toFixed(1)}%)</span>
+                                                </div>
+                                            )}
+                                            {podium[2] && (
+                                                <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(180,83,9,0.15)', padding: '16px 20px', borderRadius: '16px', textAlign: 'center', width: '170px' }}>
+                                                    <div style={{ fontSize: '1.6rem', color: '#b45309', marginBottom: '6px' }}><i className="fas fa-medal"></i></div>
+                                                    <h5 style={{ margin: '0 0 4px 0', color: 'white', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{podium[2].name}</h5>
+                                                    <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 'bold' }}>3rd Place</span>
+                                                    <span style={{ display: 'block', fontSize: '0.85rem', color: '#a855f7', fontWeight: '700', marginTop: '6px' }}>{podium[2].score}/{podium[2].totalMarks} pts ({podium[2].percentage.toFixed(1)}%)</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+
                             {filteredResults.length === 0 ? (
                                 <div className="glass-panel" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
                                     <i className="fas fa-inbox" style={{ fontSize: '3rem', marginBottom: '16px', color: 'rgba(255,255,255,0.2)' }}></i>
@@ -1370,36 +1505,119 @@ function Admin({ currentUser, onSettingsChange }) {
                                                 <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Score Secured</th>
                                                 <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Percentage</th>
                                                 <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Status</th>
+                                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '150px' }}>Diagnostics</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {filteredResults.map(res => (
-                                                <tr key={res.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
-                                                    <td style={{ padding: '20px 24px', fontWeight: '700', color: 'white' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--secondary-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: 'white', fontSize: '0.85rem' }}>
-                                                                {res.studentName.charAt(0)}
+                                                <React.Fragment key={res.id}>
+                                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
+                                                        <td style={{ padding: '20px 24px', fontWeight: '700', color: 'white' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--secondary-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: 'white', fontSize: '0.85rem' }}>
+                                                                    {res.studentName.charAt(0)}
+                                                                </div>
+                                                                {res.studentName}
                                                             </div>
-                                                            {res.studentName}
-                                                        </div>
-                                                    </td>
-                                                    <td style={{ padding: '20px 24px', fontWeight: '600', color: '#818cf8' }}>{res.examTitle}</td>
-                                                    <td style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.95rem' }}>{res.date}</td>
-                                                    <td style={{ padding: '20px 24px', fontWeight: '700', fontSize: '1.05rem', color: '#a855f7' }}>{res.score} / {res.totalMarks}</td>
-                                                    <td style={{ padding: '20px 24px' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                            <span style={{ fontWeight: '600' }}>{res.percentage.toFixed(1)}%</span>
-                                                            <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                                                                <div style={{ width: `${res.percentage}%`, height: '100%', background: res.passed ? 'var(--success-color)' : 'var(--danger-color)' }} />
+                                                        </td>
+                                                        <td style={{ padding: '20px 24px', fontWeight: '600', color: '#818cf8' }}>{res.examTitle}</td>
+                                                        <td style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '0.95rem' }}>{res.date}</td>
+                                                        <td style={{ padding: '20px 24px', fontWeight: '700', fontSize: '1.05rem', color: '#a855f7' }}>{res.score} / {res.totalMarks}</td>
+                                                        <td style={{ padding: '20px 24px' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                                <span style={{ fontWeight: '600' }}>{res.percentage.toFixed(1)}%</span>
+                                                                <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                                    <div style={{ width: `${res.percentage}%`, height: '100%', background: res.passed ? 'var(--success-color)' : 'var(--danger-color)' }} />
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                    <td style={{ padding: '20px 24px' }}>
-                                                        <span className={`badge ${res.passed ? 'badge-success' : 'badge-danger'}`}>
-                                                            {res.passed ? 'Passed' : 'Failed'}
-                                                        </span>
-                                                    </td>
-                                                </tr>
+                                                        </td>
+                                                        <td style={{ padding: '20px 24px' }}>
+                                                            <span className={`badge ${res.passed ? 'badge-success' : 'badge-danger'}`}>
+                                                                {res.passed ? 'Passed' : 'Failed'}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '20px 24px' }}>
+                                                            <button 
+                                                                onClick={() => setExpandedStudentResultId(expandedStudentResultId === res.id ? null : res.id)}
+                                                                className="btn-secondary" 
+                                                                style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '6px', margin: 0 }}
+                                                            >
+                                                                <i className={`fas ${expandedStudentResultId === res.id ? 'fa-chevron-up' : 'fa-chart-pie'}`}></i>
+                                                                {expandedStudentResultId === res.id ? 'Hide' : 'Analysis'}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+
+                                                    {/* Expanded Topic Performance Details Row */}
+                                                    {expandedStudentResultId === res.id && (
+                                                        <tr style={{ background: 'rgba(255,255,255,0.01)' }}>
+                                                            <td colSpan="7" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                                <div className="glass-panel animate-fade-in" style={{ padding: '24px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-glass)' }}>
+                                                                    <h4 style={{ color: 'white', marginTop: 0, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                        <i className="fas fa-bullseye text-gradient"></i> Topic-Level Diagnostics for {res.studentName}
+                                                                    </h4>
+                                                                    
+                                                                    {(() => {
+                                                                        const topicStats = getStudentTopicAnalytics(res);
+                                                                        if (topicStats.length === 0) {
+                                                                            return <p style={{ color: 'var(--text-muted)', margin: 0 }}>No topic-level data found for this test.</p>;
+                                                                        }
+                                                                        
+                                                                        const weakTopics = topicStats.filter(t => t.accuracy < 50);
+                                                                        const strongTopics = topicStats.filter(t => t.accuracy >= 70);
+                                                                        
+                                                                        return (
+                                                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                                                                                {/* Breakdown */}
+                                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                                                    {topicStats.map(t => {
+                                                                                        let barColor = 'var(--warning-color)';
+                                                                                        if (t.accuracy >= 70) barColor = 'var(--success-color)';
+                                                                                        else if (t.accuracy < 50) barColor = 'var(--danger-color)';
+                                                                                        
+                                                                                        return (
+                                                                                            <div key={t.topicName}>
+                                                                                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '4px' }}>
+                                                                                                    <span style={{ fontWeight: '600', color: 'rgba(255,255,255,0.8)' }}>{t.topicName}</span>
+                                                                                                    <span style={{ fontWeight: 'bold', color: barColor }}>{t.accuracy.toFixed(0)}% ({t.correctQuestions}/{t.totalQuestions} Qs)</span>
+                                                                                                </div>
+                                                                                                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                                                                    <div style={{ width: `${t.accuracy}%`, height: '100%', background: barColor }}></div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        );
+                                                                                    })}
+                                                                                </div>
+                                                                                
+                                                                                {/* Dynamic diagnostic advice */}
+                                                                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 'bold', display: 'block' }}>Faculty Diagnostics & Recommendations</span>
+                                                                                    {strongTopics.length > 0 && (
+                                                                                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.85)' }}>
+                                                                                            <i className="fas fa-check-circle" style={{ color: 'var(--success-color)', marginRight: '6px' }}></i>
+                                                                                            <strong>Good in:</strong> {strongTopics.map(t => t.topicName).join(', ')}. Solid understanding of core concepts.
+                                                                                        </p>
+                                                                                    )}
+                                                                                    {weakTopics.length > 0 ? (
+                                                                                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.85)' }}>
+                                                                                            <i className="fas fa-exclamation-triangle" style={{ color: 'var(--danger-color)', marginRight: '6px' }}></i>
+                                                                                            <strong>Poor in:</strong> {weakTopics.map(t => t.topicName).join(', ')}. Recommend focus session and revision of formulas.
+                                                                                        </p>
+                                                                                    ) : (
+                                                                                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--success-color)' }}>
+                                                                                            <i className="fas fa-star" style={{ marginRight: '6px' }}></i>
+                                                                                            Exceptional effort! No conceptual weaknesses identified.
+                                                                                        </p>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })()}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </React.Fragment>
                                             ))}
                                         </tbody>
                                     </table>

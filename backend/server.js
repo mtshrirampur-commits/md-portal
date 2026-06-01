@@ -66,22 +66,47 @@ const Message = mongoose.model('Message', messageSchema);
 async function migrateData() {
     try {
         const usersCount = await User.countDocuments();
-        if (usersCount > 0) return; // Already migrated
-        
         const dbPath = path.join(__dirname, 'db.json');
+        
         if (fs.existsSync(dbPath)) {
-            console.log('Migrating data from db.json to MongoDB...');
-            const dbJson = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+            const dbContent = fs.readFileSync(dbPath, 'utf8').trim().replace(/^\uFEFF/, '');
+            const dbJson = JSON.parse(dbContent);
             
-            if (dbJson.users) await User.insertMany(dbJson.users.map(u => ({...u, id: u.id.toString()})));
-            if (dbJson.exams) await Exam.insertMany(dbJson.exams);
-            if (dbJson.results) await Result.insertMany(dbJson.results);
-            if (dbJson.dpqs) await Dpq.insertMany(dbJson.dpqs);
-            if (dbJson.dpq_attempts) await DpqAttempt.insertMany(dbJson.dpq_attempts);
-            if (dbJson.pyps) await Pyp.insertMany(dbJson.pyps);
-            if (dbJson.settings) await Setting.create({ key: 'global', data: dbJson.settings });
-            
-            console.log('Migration successful!');
+            if (usersCount === 0) {
+                console.log('Migrating data from db.json to MongoDB...');
+                if (dbJson.users) await User.insertMany(dbJson.users.map(u => ({...u, id: u.id.toString()})));
+                if (dbJson.exams) await Exam.insertMany(dbJson.exams);
+                if (dbJson.results) await Result.insertMany(dbJson.results);
+                if (dbJson.dpqs) await Dpq.insertMany(dbJson.dpqs);
+                if (dbJson.dpq_attempts) await DpqAttempt.insertMany(dbJson.dpq_attempts);
+                if (dbJson.pyps) await Pyp.insertMany(dbJson.pyps);
+                if (dbJson.settings) await Setting.create({ key: 'global', data: dbJson.settings });
+                console.log('Migration successful!');
+            } else {
+                console.log('Database already migrated. Verifying Thermodynamics exam and seed results...');
+                // Ensure the thermodynamics exam is present in Atlas
+                const existsExam = await Exam.findOne({ id: 'exam-thermo-shm' });
+                if (!existsExam) {
+                    const thermoExam = dbJson.exams.find(e => e.id === 'exam-thermo-shm');
+                    if (thermoExam) {
+                        await Exam.create(thermoExam);
+                        console.log('Seeded Thermodynamics exam to MongoDB Atlas!');
+                    }
+                }
+                
+                // Ensure the seed results are present in Atlas
+                const seedResultIds = ['res-thermo-shm-priya', 'res-thermo-shm-rajesh', 'res-thermo-shm-aditya'];
+                for (const rId of seedResultIds) {
+                    const existsRes = await Result.findOne({ id: rId });
+                    if (!existsRes) {
+                        const seedRes = dbJson.results.find(r => r.id === rId);
+                        if (seedRes) {
+                            await Result.create(seedRes);
+                            console.log(`Seeded result ${rId} to MongoDB Atlas!`);
+                        }
+                    }
+                }
+            }
         }
     } catch (err) {
         console.error('Migration error:', err);

@@ -7,6 +7,7 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     const [pyps, setPyps] = React.useState([]);
     const [messages, setMessages] = React.useState([]);
     const [users, setUsers] = React.useState([]);
+    const [allExams, setAllExams] = React.useState([]);
     
     React.useEffect(() => {
         async function loadDashboardData() {
@@ -20,6 +21,7 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                     api.getMessagesForUser(currentUser.id),
                     api.getUsers()
                 ]);
+                setAllExams(fetchedExams);
                 setExams(fetchedExams.filter(e => e.assignedBatch === currentUser.batch));
                 setAllResults(fetchedResults);
                 setResults(fetchedResults.filter(r => r.studentId === currentUser.id));
@@ -57,7 +59,9 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     const [testViewMode, setTestViewMode] = React.useState('table'); // 'table' | 'grid'
     const [testSearch, setTestSearch] = React.useState('');
     const [testSubjectFilter, setTestSubjectFilter] = React.useState('all');
-    const [testSortKey, setTestSortKey] = React.useState('date'); // 'date' | 'title' | 'marks' | 'duration'
+    // Test-Specific Leaderboard states
+    const [leaderboardMode, setLeaderboardMode] = React.useState('cumulative'); // 'cumulative' | 'test'
+    const [selectedLeaderboardExamId, setSelectedLeaderboardExamId] = React.useState('exam-thermo-shm');
 
     // Unread message count
     const unreadCount = messages.filter(m => m.receiverId == currentUser.id && m.read === false).length;
@@ -243,6 +247,86 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
 
         // Sort by average percentage descending
         return leaderboardList.sort((a, b) => b.avgPercentage - a.avgPercentage);
+    };
+
+    // Calculate Topic-Level Analytics & Study Guidance
+    const getTopicAnalytics = () => {
+        const topicStats = {};
+        
+        results.forEach(res => {
+            // Find exam details
+            const exam = allExams.find(e => e.id === res.examId);
+            if (!exam || !exam.questions) return;
+            
+            // Loop through questions and compare student's answer
+            exam.questions.forEach((q, qIndex) => {
+                const topic = q.topic || 'General';
+                if (!topicStats[topic]) {
+                    topicStats[topic] = {
+                        topicName: topic,
+                        totalQuestions: 0,
+                        correctQuestions: 0,
+                        totalMarks: 0,
+                        securedMarks: 0
+                    };
+                }
+                
+                const userAns = res.answers && res.answers[qIndex] !== undefined ? res.answers[qIndex] : -1;
+                const isCorrect = userAns === q.correctOption;
+                
+                topicStats[topic].totalQuestions += 1;
+                if (isCorrect) {
+                    topicStats[topic].correctQuestions += 1;
+                    topicStats[topic].securedMarks += q.marks || 10;
+                }
+                topicStats[topic].totalMarks += q.marks || 10;
+            });
+        });
+        
+        const topicsList = Object.values(topicStats).map(stat => {
+            const accuracy = stat.totalQuestions > 0 
+                ? (stat.correctQuestions / stat.totalQuestions * 100) 
+                : 0;
+            return {
+                ...stat,
+                accuracy
+            };
+        });
+        
+        // Sort by accuracy descending
+        topicsList.sort((a, b) => b.accuracy - a.accuracy);
+        
+        const strongTopics = topicsList.filter(t => t.accuracy >= 70);
+        const weakTopics = topicsList.filter(t => t.accuracy < 50);
+        
+        return {
+            allTopics: topicsList,
+            strongTopics,
+            weakTopics
+        };
+    };
+
+    // Calculate Test-Specific Leaderboard rankings
+    const getTestLeaderboard = (examId) => {
+        if (!examId) return [];
+        const examResults = allResults.filter(r => r.examId === examId);
+        const studentMap = {};
+        
+        examResults.forEach(res => {
+            const currentBest = studentMap[res.studentId];
+            if (!currentBest || res.score > currentBest.score) {
+                studentMap[res.studentId] = {
+                    name: res.studentName,
+                    score: res.score,
+                    totalMarks: res.totalMarks,
+                    percentage: res.percentage,
+                    passed: res.passed,
+                    date: res.date
+                };
+            }
+        });
+        
+        return Object.values(studentMap).sort((a, b) => b.score - a.score);
     };
 
     // Calculate aggregated metrics for current student
@@ -1025,6 +1109,113 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Topic-Level Analytics & Focus Recommendations */}
+                        {totalAttempted > 0 && (
+                            <div className="glass-panel" style={{ padding: '40px', marginTop: '32px' }}>
+                                <h3 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <i className="fas fa-bullseye text-gradient"></i> Topic Mastery & Study Recommendations
+                                </h3>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '28px' }}>
+                                    Granular conceptual feedback compiled across all mock exam questions to target syllabus weak points.
+                                </p>
+                                
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '32px' }}>
+                                    {/* Topic Accuracy Progress List */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                        <h4 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                                            <i className="fas fa-layer-group" style={{ marginRight: '8px', color: '#a855f7' }}></i> Concept Accuracy Breakdown
+                                        </h4>
+                                        {getTopicAnalytics().allTopics.length === 0 ? (
+                                            <p style={{ color: 'var(--text-muted)' }}>No topic-level data available.</p>
+                                        ) : (
+                                            getTopicAnalytics().allTopics.map(tStat => {
+                                                let barColor = 'var(--warning-color)';
+                                                let badgeClass = 'badge-warning';
+                                                if (tStat.accuracy >= 70) {
+                                                    barColor = 'var(--success-color)';
+                                                    badgeClass = 'badge-success';
+                                                } else if (tStat.accuracy < 50) {
+                                                    barColor = 'var(--danger-color)';
+                                                    badgeClass = 'badge-danger';
+                                                }
+                                                
+                                                return (
+                                                    <div key={tStat.topicName} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <span style={{ fontWeight: '600', color: 'white' }}>{tStat.topicName}</span>
+                                                            <span className={`badge ${badgeClass}`} style={{ fontSize: '0.75rem', padding: '4px 10px' }}>
+                                                                {tStat.accuracy.toFixed(0)}% Accuracy ({tStat.correctQuestions}/{tStat.totalQuestions} Qs)
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                                                            <div style={{ width: `${tStat.accuracy}%`, height: '100%', background: barColor, borderRadius: '4px' }}></div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                    
+                                    {/* Actionable Suggestions Card */}
+                                    <div className="glass-panel" style={{ padding: '28px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-glass)' }}>
+                                        <h4 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <i className="fas fa-graduation-cap" style={{ color: '#10b981' }}></i> Personalized Study Guidance
+                                        </h4>
+                                        {(() => {
+                                            const { strongTopics, weakTopics } = getTopicAnalytics();
+                                            
+                                            if (strongTopics.length === 0 && weakTopics.length === 0) {
+                                                return (
+                                                    <p style={{ color: 'var(--text-muted)', margin: 0 }}>
+                                                        Keep completing mock tests to generate personalized study recommendations.
+                                                    </p>
+                                                );
+                                            }
+                                            
+                                            let strongText = strongTopics.map(t => t.topicName).join(', ');
+                                            let weakText = weakTopics.map(t => t.topicName).join(', ');
+                                            
+                                            return (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                                    {strongTopics.length > 0 && (
+                                                        <div style={{ background: 'rgba(16,185,129,0.05)', borderLeft: '4px solid var(--success-color)', padding: '16px', borderRadius: '8px' }}>
+                                                            <h5 style={{ margin: '0 0 6px 0', color: 'var(--success-color)', fontWeight: '700' }}>
+                                                                <i className="fas fa-trophy" style={{ marginRight: '6px' }}></i> Concept Strengths
+                                                            </h5>
+                                                            <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)' }}>
+                                                                You have shown excellent mastery in <strong>{strongText}</strong> with accuracy above 70%. Excellent conceptual command!
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {weakTopics.length > 0 ? (
+                                                        <div style={{ background: 'rgba(239,68,68,0.05)', borderLeft: '4px solid var(--danger-color)', padding: '16px', borderRadius: '8px' }}>
+                                                            <h5 style={{ margin: '0 0 6px 0', color: 'var(--danger-color)', fontWeight: '700' }}>
+                                                                <i className="fas fa-exclamation-triangle" style={{ marginRight: '6px' }}></i> Suggested Focus Areas
+                                                            </h5>
+                                                            <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', lineHeight: '1.4' }}>
+                                                                Based on evaluations, <strong>{currentUser.name}</strong>, you need to reinforce <strong>{weakText}</strong>. 
+                                                                We highly recommend reviewing detailed solution guides, revising class notes, and taking related DPP assignments to rebuild strength.
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ background: 'rgba(59,130,246,0.05)', borderLeft: '4px solid #3b82f6', padding: '16px', borderRadius: '8px' }}>
+                                                            <h5 style={{ margin: '0 0 6px 0', color: '#3b82f6', fontWeight: '700' }}>
+                                                                <i className="fas fa-thumbs-up" style={{ marginRight: '6px' }}></i> Focus Recommendation
+                                                            </h5>
+                                                            <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)' }}>
+                                                                Amazing job! You have no critical weak topics (accuracy &lt; 50%). Keep maintaining this high academy standard across all chapters!
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -1035,103 +1226,300 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', marginBottom: '32px' }}>
                                 <div>
                                     <h2 style={{ fontSize: '1.8rem', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <i className="fas fa-award text-gradient"></i> Academy Leaderboard
+                                        <i className="fas fa-trophy text-gradient"></i> Academy Leaderboard
                                     </h2>
                                     <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '4px' }}>
-                                        Dynamic real-time ranking of top scholars, calculated by average percentage across all completed exams.
+                                        Track competitive rankings and review test standings across classes and chapters.
                                     </p>
                                 </div>
                                 <span className="badge badge-success" style={{ padding: '8px 16px' }}>
-                                    <i className="fas fa-bolt"></i> Live Updates Enabled
+                                    <i className="fas fa-bolt"></i> Live Standings
                                 </span>
                             </div>
 
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                    <thead>
-                                        <tr style={{ background: 'rgba(0,0,0,0.4)', borderBottom: '1px solid var(--border-glass)' }}>
-                                            <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '100px' }}>Rank</th>
-                                            <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Candidate Name</th>
-                                            <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', textAlign: 'center' }}>Completed Tests</th>
-                                            <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Average Score</th>
-                                            <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Scholar Category</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {getLeaderboard().map((student, index) => {
-                                            const rank = index + 1;
-                                            
-                                            // Special visual highlights for Top 3 Ranks
-                                            let rankText = rank;
-                                            let rankStyle = {
-                                                width: '32px',
-                                                height: '32px',
-                                                borderRadius: '50%',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontWeight: '800',
-                                                fontSize: '1rem',
-                                                color: 'white',
-                                                background: 'rgba(255,255,255,0.05)'
-                                            };
-                                            let rowStyle = {
-                                                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                                transition: 'all 0.2s ease'
-                                            };
-
-                                            if (rank === 1) {
-                                                rankText = <i className="fas fa-crown"></i>;
-                                                rankStyle.background = 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)';
-                                                rankStyle.color = '#111827';
-                                                rankStyle.boxShadow = '0 0 15px rgba(245, 158, 11, 0.4)';
-                                                rowStyle.background = 'rgba(245, 158, 11, 0.03)';
-                                            } else if (rank === 2) {
-                                                rankStyle.background = 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)';
-                                                rankStyle.color = '#111827';
-                                                rankStyle.boxShadow = '0 0 12px rgba(226, 232, 240, 0.2)';
-                                            } else if (rank === 3) {
-                                                rankStyle.background = 'linear-gradient(135deg, #b45309 0%, #78350f 100%)';
-                                                rankStyle.boxShadow = '0 0 12px rgba(180, 83, 9, 0.2)';
-                                            }
-
-                                            // Highlight active user row
-                                            const isCurrentUser = student.name === currentUser.name;
-                                            if (isCurrentUser) {
-                                                rowStyle.border = '2px solid rgba(168, 85, 247, 0.4)';
-                                                rowStyle.background = 'rgba(168, 85, 247, 0.05)';
-                                            }
-
-                                            return (
-                                                <tr 
-                                                    key={student.name} 
-                                                    style={rowStyle} 
-                                                    onMouseOver={(e) => { e.currentTarget.style.background = isCurrentUser ? 'rgba(168, 85, 247, 0.08)' : 'rgba(255,255,255,0.03)'; }} 
-                                                    onMouseOut={(e) => { e.currentTarget.style.background = isCurrentUser ? 'rgba(168, 85, 247, 0.05)' : 'transparent'; }}
-                                                >
-                                                    <td style={{ padding: '18px 24px' }}>
-                                                        <div style={rankStyle}>{rankText}</div>
-                                                    </td>
-                                                    <td style={{ padding: '18px 24px', fontWeight: '600', color: 'white' }}>
-                                                        {student.name} {isCurrentUser && <span className="badge badge-success" style={{ marginLeft: '8px', fontSize: '0.65rem', padding: '3px 8px' }}>You</span>}
-                                                    </td>
-                                                    <td style={{ padding: '18px 24px', textAlign: 'center', fontWeight: '600', color: 'var(--text-muted)' }}>
-                                                        {student.completedCount}
-                                                    </td>
-                                                    <td style={{ padding: '18px 24px', fontWeight: '800', fontSize: '1.05rem', color: '#a855f7', fontFamily: 'Outfit' }}>
-                                                        {student.avgPercentage.toFixed(1)}%
-                                                    </td>
-                                                    <td style={{ padding: '18px 24px' }}>
-                                                        <span className="badge" style={student.badgeStyle}>
-                                                            {student.badge}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
+                            {/* Mode Toggle Tabs */}
+                            <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '12px', border: '1px solid var(--border-glass)', maxWidth: 'fit-content' }}>
+                                <button 
+                                    onClick={() => setLeaderboardMode('cumulative')} 
+                                    className={leaderboardMode === 'cumulative' ? 'btn-primary' : 'btn-secondary'}
+                                    style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+                                >
+                                    <i className="fas fa-users" style={{ marginRight: '6px' }}></i> Cumulative Rankings
+                                </button>
+                                <button 
+                                    onClick={() => setLeaderboardMode('test')} 
+                                    className={leaderboardMode === 'test' ? 'btn-primary' : 'btn-secondary'}
+                                    style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+                                >
+                                    <i className="fas fa-file-alt" style={{ marginRight: '6px' }}></i> Test-Specific Standings
+                                </button>
                             </div>
+
+                            {/* Test Selector Dropdown */}
+                            {leaderboardMode === 'test' && (
+                                <div style={{ marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', background: 'rgba(255,255,255,0.02)', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border-glass)', maxWidth: 'fit-content' }}>
+                                    <label style={{ color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.95rem' }}>Select Mock Test:</label>
+                                    <select 
+                                        className="input-premium" 
+                                        value={selectedLeaderboardExamId} 
+                                        onChange={e => setSelectedLeaderboardExamId(e.target.value)}
+                                        style={{ width: 'auto', background: '#0b0f19', display: 'inline-block', minWidth: '280px', margin: 0, padding: '10px 16px' }}
+                                    >
+                                        {allExams.filter(e => allResults.some(r => r.examId === e.id)).map(e => (
+                                            <option key={e.id} value={e.id}>{e.title}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Fetch and Segment Rank Data */}
+                            {(() => {
+                                const activeData = leaderboardMode === 'cumulative' 
+                                    ? getLeaderboard() 
+                                    : getTestLeaderboard(selectedLeaderboardExamId);
+
+                                if (activeData.length === 0) {
+                                    return (
+                                        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
+                                            <i className="fas fa-info-circle" style={{ fontSize: '2.5rem', marginBottom: '12px' }}></i>
+                                            <p style={{ margin: 0 }}>No submission records available for this standings view.</p>
+                                        </div>
+                                    );
+                                }
+
+                                const podium = activeData.slice(0, 3);
+                                const tableData = activeData; // We can list all of them in the table, or only index > 2. Let's list all of them but give a highly prominent podium block above it!
+
+                                return (
+                                    <div>
+                                        {/* Beautiful Leaderboard Podium Grid */}
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'flex-end',
+                                            gap: '24px',
+                                            margin: '24px 0 48px 0',
+                                            flexWrap: 'wrap-reverse'
+                                        }}>
+                                            {/* 2nd place */}
+                                            {podium[1] && (
+                                                <div className="podium-card rank-2nd animate-fade-in" style={{
+                                                    background: 'rgba(255, 255, 255, 0.02)',
+                                                    border: '1px solid rgba(226, 232, 240, 0.2)',
+                                                    borderRadius: '20px',
+                                                    padding: '24px',
+                                                    width: '200px',
+                                                    textAlign: 'center',
+                                                    minHeight: '180px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    justifyContent: 'center',
+                                                    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.2)',
+                                                    position: 'relative'
+                                                }}>
+                                                    <div style={{ fontSize: '2.2rem', color: '#cbd5e1', marginBottom: '8px' }}>
+                                                        <i className="fas fa-award"></i>
+                                                    </div>
+                                                    <h4 style={{ color: 'white', margin: '0 0 4px 0', fontSize: '1.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{podium[1].name}</h4>
+                                                    <span style={{ color: '#cbd5e1', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase' }}>2nd Place</span>
+                                                    <span style={{ color: '#a855f7', fontWeight: '800', fontSize: '1rem', marginTop: '12px', display: 'block', fontFamily: 'Outfit' }}>
+                                                        {podium[1].score !== undefined ? `${podium[1].score}/${podium[1].totalMarks} pts` : `${podium[1].avgPercentage.toFixed(1)}%`}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* 1st place */}
+                                            {podium[0] && (
+                                                <div className="podium-card rank-1st animate-fade-in" style={{
+                                                    background: 'rgba(255, 255, 255, 0.03)',
+                                                    border: '1px solid rgba(251, 191, 36, 0.4)',
+                                                    borderRadius: '20px',
+                                                    padding: '32px 24px',
+                                                    width: '220px',
+                                                    textAlign: 'center',
+                                                    minHeight: '220px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    justifyContent: 'center',
+                                                    boxShadow: '0 0 30px rgba(251, 191, 36, 0.15)',
+                                                    position: 'relative',
+                                                    zIndex: 2
+                                                }}>
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '-20px',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                                                        borderRadius: '50%',
+                                                        width: '40px',
+                                                        height: '40px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        color: '#111827',
+                                                        fontSize: '1.25rem',
+                                                        boxShadow: '0 0 15px rgba(245,158,11,0.5)',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        <i className="fas fa-crown"></i>
+                                                    </div>
+                                                    <h3 style={{ color: 'white', margin: '12px 0 4px 0', fontSize: '1.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{podium[0].name}</h3>
+                                                    <span style={{ color: '#fbbf24', fontSize: '0.9rem', fontWeight: 'extrabold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>1st Place</span>
+                                                    <span style={{ color: '#10b981', fontWeight: '800', fontSize: '1.2rem', marginTop: '12px', display: 'block', fontFamily: 'Outfit' }}>
+                                                        {podium[0].score !== undefined ? `${podium[0].score}/${podium[0].totalMarks} pts` : `${podium[0].avgPercentage.toFixed(1)}%`}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* 3rd place */}
+                                            {podium[2] && (
+                                                <div className="podium-card rank-3rd animate-fade-in" style={{
+                                                    background: 'rgba(255, 255, 255, 0.02)',
+                                                    border: '1px solid rgba(180, 83, 9, 0.2)',
+                                                    borderRadius: '20px',
+                                                    padding: '24px',
+                                                    width: '200px',
+                                                    textAlign: 'center',
+                                                    minHeight: '160px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    justifyContent: 'center',
+                                                    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.2)',
+                                                    position: 'relative'
+                                                }}>
+                                                    <div style={{ fontSize: '2rem', color: '#b45309', marginBottom: '8px' }}>
+                                                        <i className="fas fa-medal"></i>
+                                                    </div>
+                                                    <h4 style={{ color: 'white', margin: '0 0 4px 0', fontSize: '1.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{podium[2].name}</h4>
+                                                    <span style={{ color: '#b45309', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase' }}>3rd Place</span>
+                                                    <span style={{ color: '#a855f7', fontWeight: '800', fontSize: '1rem', marginTop: '12px', display: 'block', fontFamily: 'Outfit' }}>
+                                                        {podium[2].score !== undefined ? `${podium[2].score}/${podium[2].totalMarks} pts` : `${podium[2].avgPercentage.toFixed(1)}%`}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Standings List Table */}
+                                        <div style={{ overflowX: 'auto' }}>
+                                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                                <thead>
+                                                    <tr style={{ background: 'rgba(0,0,0,0.4)', borderBottom: '1px solid var(--border-glass)' }}>
+                                                        <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', width: '100px' }}>Rank</th>
+                                                        <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Candidate Name</th>
+                                                        {leaderboardMode === 'cumulative' ? (
+                                                            <>
+                                                                <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', textAlign: 'center' }}>Completed Tests</th>
+                                                                <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Average Score</th>
+                                                                <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Scholar Category</th>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', textAlign: 'center' }}>Marks Secured</th>
+                                                                <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Percentage</th>
+                                                                <th style={{ padding: '18px 24px', color: 'var(--text-muted)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase' }}>Passing Status</th>
+                                                            </>
+                                                        )}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {tableData.map((student, index) => {
+                                                        const rank = index + 1;
+                                                        
+                                                        // Special visual highlights for Top 3 Ranks
+                                                        let rankText = rank;
+                                                        let rankStyle = {
+                                                            width: '32px',
+                                                            height: '32px',
+                                                            borderRadius: '50%',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontWeight: '800',
+                                                            fontSize: '1rem',
+                                                            color: 'white',
+                                                            background: 'rgba(255,255,255,0.05)'
+                                                        };
+                                                        let rowStyle = {
+                                                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                                            transition: 'all 0.2s ease'
+                                                        };
+
+                                                        if (rank === 1) {
+                                                            rankText = <i className="fas fa-crown"></i>;
+                                                            rankStyle.background = 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)';
+                                                            rankStyle.color = '#111827';
+                                                            rankStyle.boxShadow = '0 0 15px rgba(245, 158, 11, 0.4)';
+                                                            rowStyle.background = 'rgba(245, 158, 11, 0.03)';
+                                                        } else if (rank === 2) {
+                                                            rankText = '2';
+                                                            rankStyle.background = 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)';
+                                                            rankStyle.color = '#111827';
+                                                            rankStyle.boxShadow = '0 0 12px rgba(226, 232, 240, 0.2)';
+                                                        } else if (rank === 3) {
+                                                            rankText = '3';
+                                                            rankStyle.background = 'linear-gradient(135deg, #b45309 0%, #78350f 100%)';
+                                                            rankStyle.boxShadow = '0 0 12px rgba(180, 83, 9, 0.2)';
+                                                        }
+
+                                                        // Highlight active user row
+                                                        const isCurrentUser = student.name === currentUser.name;
+                                                        if (isCurrentUser) {
+                                                            rowStyle.border = '2px solid rgba(168, 85, 247, 0.4)';
+                                                            rowStyle.background = 'rgba(168, 85, 247, 0.05)';
+                                                        }
+
+                                                        return (
+                                                            <tr 
+                                                                key={student.name} 
+                                                                style={rowStyle} 
+                                                                onMouseOver={(e) => { e.currentTarget.style.background = isCurrentUser ? 'rgba(168, 85, 247, 0.08)' : 'rgba(255,255,255,0.03)'; }} 
+                                                                onMouseOut={(e) => { e.currentTarget.style.background = isCurrentUser ? 'rgba(168, 85, 247, 0.05)' : 'transparent'; }}
+                                                            >
+                                                                <td style={{ padding: '18px 24px' }}>
+                                                                    <div style={rankStyle}>{rankText}</div>
+                                                                </td>
+                                                                <td style={{ padding: '18px 24px', fontWeight: '600', color: 'white' }}>
+                                                                    {student.name} {isCurrentUser && <span className="badge badge-success" style={{ marginLeft: '8px', fontSize: '0.65rem', padding: '3px 8px' }}>You</span>}
+                                                                </td>
+                                                                {leaderboardMode === 'cumulative' ? (
+                                                                    <>
+                                                                        <td style={{ padding: '18px 24px', textAlign: 'center', fontWeight: '600', color: 'var(--text-muted)' }}>
+                                                                            {student.completedCount}
+                                                                        </td>
+                                                                        <td style={{ padding: '18px 24px', fontWeight: '800', fontSize: '1.05rem', color: '#a855f7', fontFamily: 'Outfit' }}>
+                                                                            {student.avgPercentage.toFixed(1)}%
+                                                                        </td>
+                                                                        <td style={{ padding: '18px 24px' }}>
+                                                                            <span className="badge" style={student.badgeStyle}>
+                                                                                {student.badge}
+                                                                            </span>
+                                                                        </td>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <td style={{ padding: '18px 24px', textAlign: 'center', fontWeight: '600', color: 'white' }}>
+                                                                            {student.score} / {student.totalMarks}
+                                                                        </td>
+                                                                        <td style={{ padding: '18px 24px', fontWeight: '800', fontSize: '1.05rem', color: '#a855f7', fontFamily: 'Outfit' }}>
+                                                                            {student.percentage.toFixed(1)}%
+                                                                        </td>
+                                                                        <td style={{ padding: '18px 24px' }}>
+                                                                            <span className={`badge ${student.passed ? 'badge-success' : 'badge-danger'}`} style={{ padding: '4px 12px' }}>
+                                                                                {student.passed ? 'Passed' : 'Failed'}
+                                                                            </span>
+                                                                        </td>
+                                                                    </>
+                                                                )}
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 )}
