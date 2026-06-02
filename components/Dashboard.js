@@ -443,10 +443,9 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                         <i className="fas fa-book-open"></i> Previous Year Questions
                     </button>
                     <button 
-                        onClick={() => setActiveTab('doubts')} 
+                        onClick={handleOpenDoubts}
                         className={activeTab === 'doubts' ? 'btn-primary' : 'btn-secondary'}
                         style={{ padding: '12px 24px', borderRadius: '12px', border: activeTab === 'doubts' ? 'none' : '1px solid transparent', background: activeTab === 'doubts' ? 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' : '', position: 'relative' }}
-                        onClick={handleOpenDoubts}
                     >
                         <i className="fas fa-question-circle"></i> Doubts & Chat
                         {unreadCount > 0 && (
