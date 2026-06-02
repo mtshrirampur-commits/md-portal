@@ -59,6 +59,7 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     const [testViewMode, setTestViewMode] = React.useState('table'); // 'table' | 'grid'
     const [testSearch, setTestSearch] = React.useState('');
     const [testSubjectFilter, setTestSubjectFilter] = React.useState('all');
+    const [testSortKey, setTestSortKey] = React.useState('date');
     // Test-Specific Leaderboard states
     const [leaderboardMode, setLeaderboardMode] = React.useState('cumulative'); // 'cumulative' | 'test'
     const [selectedLeaderboardExamId, setSelectedLeaderboardExamId] = React.useState('exam-thermo-shm');
