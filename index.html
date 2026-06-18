@@ -20,40 +20,6 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
-    <script>
-        window.addEventListener('error', function(e) {
-            var div = document.createElement('div');
-            div.style.position = 'fixed';
-            div.style.top = '0';
-            div.style.left = '0';
-            div.style.width = '100%';
-            div.style.background = '#fee2e2';
-            div.style.color = '#991b1b';
-            div.style.padding = '20px';
-            div.style.borderBottom = '3px solid #f87171';
-            div.style.zIndex = '999999';
-            div.style.fontFamily = 'monospace';
-            div.style.whiteSpace = 'pre-wrap';
-            div.innerHTML = '<h3>🚨 Browser JS Error Detected:</h3>' + e.message + '\nat ' + e.filename + ':' + e.lineno + ':' + e.colno + '\n\nStack:\n' + (e.error ? e.error.stack : 'No stack trace');
-            document.body.appendChild(div);
-        });
-        window.addEventListener('unhandledrejection', function(e) {
-            var div = document.createElement('div');
-            div.style.position = 'fixed';
-            div.style.top = '0';
-            div.style.left = '0';
-            div.style.width = '100%';
-            div.style.background = '#fee2e2';
-            div.style.color = '#991b1b';
-            div.style.padding = '20px';
-            div.style.borderBottom = '3px solid #f87171';
-            div.style.zIndex = '999999';
-            div.style.fontFamily = 'monospace';
-            div.style.whiteSpace = 'pre-wrap';
-            div.innerHTML = '<h3>🚨 Unhandled Promise Rejection:</h3>' + e.reason + (e.reason && e.reason.stack ? '\n\nStack:\n' + e.reason.stack : '');
-            document.body.appendChild(div);
-        });
-    </script>
     <div id="root"></div>
 
     <!-- Application Data and Components (Loaded via Babel JSX) -->
