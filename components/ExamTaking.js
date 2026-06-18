@@ -143,6 +143,8 @@ function ExamScorecard({ exam, resultData, setIsReviewMode, onFinish, onLogout }
                                     );
                                 })}
                             </div>
+                        </div>
+                    )}
                     {/* Topic-Level conceptual feedback */}
                     {(() => {
                         const topicAnalytics = getExamTopicAnalytics();

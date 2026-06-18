@@ -252,6 +252,7 @@ function App() {
                         exam={activeExam}
                         currentUser={currentUser}
                         onFinish={handleFinishExam}
+                        onLogout={handleLogout}
                         retrospectiveResult={reviewResult}
                     />
                 )}

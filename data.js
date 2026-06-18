@@ -16,6 +16,54 @@ const INITIAL_PYPS = [];
 
 const INITIAL_EXAMS = [
     {
+        id: 'exam-thermo-shm',
+        title: 'Physics Mock Test - Thermodynamics & SHM',
+        subject: 'Physics',
+        assignedBatch: 'JEE Advanced 2026',
+        durationMinutes: 10,
+        totalMarks: 40,
+        passingMarks: 20,
+        description: 'Comprehensive evaluation of Thermodynamics Laws and Simple Harmonic Motion fundamentals.',
+        questions: [
+            {
+                id: 'q_thermo_1',
+                questionText: 'Which of the following laws of thermodynamics defines the concept of temperature?',
+                options: ['Zeroth Law', 'First Law', 'Second Law', 'Third Law'],
+                correctOption: 0,
+                marks: 10,
+                topic: 'Thermodynamics',
+                solutionExplanation: 'The Zeroth Law of Thermodynamics establishes the concept of temperature. It states that if two systems are each in thermal equilibrium with a third system, they are in thermal equilibrium with each other.'
+            },
+            {
+                id: 'q_thermo_2',
+                questionText: 'In an adiabatic process, the relation between pressure P and volume V is PV^γ = constant. The work done during adiabatic expansion is:',
+                options: ['(P1V1 - P2V2) / (γ - 1)', '(P2V2 - P1V1) / (γ - 1)', 'P(V2 - V1)', 'nRT ln(V2/V1)'],
+                correctOption: 0,
+                marks: 10,
+                topic: 'Thermodynamics',
+                solutionExplanation: 'For an adiabatic process, work done W = ∫ P dV = (P1V1 - P2V2) / (γ - 1).'
+            },
+            {
+                id: 'q_shm_1',
+                questionText: 'For a particle executing simple harmonic motion (SHM), the relation between acceleration \'a\' and displacement \'x\' from mean position is:',
+                options: ['a = -ω²x', 'a = -ωx', 'a = ω²x²', 'a = -ω²x²'],
+                correctOption: 0,
+                marks: 10,
+                topic: 'Simple Harmonic Motion',
+                solutionExplanation: 'In simple harmonic motion, the restoring force is proportional to displacement, so F = -kx => ma = -kx => a = -(k/m)x = -ω²x.'
+            },
+            {
+                id: 'q_shm_2',
+                questionText: 'The time period of a simple pendulum of length L at a place with gravitational acceleration g is given by:',
+                options: ['2π √(L/g)', '2π √(g/L)', '1/(2π) √(L/g)', '2π (L/g)'],
+                correctOption: 0,
+                marks: 10,
+                topic: 'Simple Harmonic Motion',
+                solutionExplanation: 'The time period of a simple pendulum is T = 2π √(L/g).'
+            }
+        ]
+    },
+    {
         id: 'exam-1',
         title: 'Physics Full Mock Test - Electromagnetism',
         subject: 'Physics',
@@ -31,6 +79,7 @@ const INITIAL_EXAMS = [
                 options: ['Zero', 'Decreases as we move towards its end', 'Increases as we move towards its end', 'Uniform across all points inside'],
                 correctOption: 3,
                 marks: 10,
+                topic: 'Electromagnetics',
                 solutionExplanation: 'The magnetic field inside a long solenoid carrying current is uniform and constant. According to Ampere\'s Circuital Law, the field is given by B = μ₀nI, where n is the number of turns per unit length and I is the current. This field is approximately uniform inside the solenoid and parallel to its axis, except near the ends where the field lines diverge.'
             },
             {
@@ -39,6 +88,7 @@ const INITIAL_EXAMS = [
                 options: ['Constant magnetic field', 'Changing magnetic flux', 'Static electric charge', 'Gravitational waves'],
                 correctOption: 1,
                 marks: 10,
+                topic: 'Electromagnetic Induction',
                 solutionExplanation: 'Faraday\'s Law of Induction states that a changing magnetic flux through a loop of wire induces an electromotive force (EMF) in the wire. Mathematically, EMF = -dΦ_B/dt, indicating that the magnitude of the induced EMF is directly proportional to the time rate of change of the magnetic flux Φ_B.'
             },
             {
@@ -47,6 +97,7 @@ const INITIAL_EXAMS = [
                 options: ['Tesla', 'Weber', 'Henry', 'Gauss'],
                 correctOption: 1,
                 marks: 10,
+                topic: 'Magnetic Flux',
                 solutionExplanation: 'The SI unit of magnetic flux is the Weber (symbol: Wb). It is defined as the amount of flux that, linking a circuit of one turn, would produce in it an electromotive force of one volt if it were reduced to zero at a uniform rate in one second. 1 Weber is equal to 1 Tesla-square-meter (T·m²).'
             }
         ]
@@ -67,6 +118,7 @@ const INITIAL_EXAMS = [
                 options: ['x^x (1 + ln x)', 'x^(x-1)', 'x^x ln x', '1'],
                 correctOption: 0,
                 marks: 10,
+                topic: 'Calculus',
                 solutionExplanation: 'To differentiate f(x) = x^x, use logarithmic differentiation. Let y = x^x, then ln(y) = x ln(x). Differentiating both sides with respect to x gives: (1/y)(dy/dx) = ln(x) + x(1/x) = ln(x) + 1. Thus, dy/dx = y(1 + ln(x)) = x^x (1 + ln(x)).'
             },
             {
@@ -75,6 +127,7 @@ const INITIAL_EXAMS = [
                 options: ['1', '0', '|A||B|', 'Infinite'],
                 correctOption: 1,
                 marks: 10,
+                topic: 'Vector Geometry',
                 solutionExplanation: 'The dot product (scalar product) of two vectors A and B is given by A · B = |A||B| cos(θ), where θ is the angle between them. If the vectors are perpendicular, θ = 90° and cos(90°) = 0, which makes the dot product exactly 0.'
             },
             {
@@ -83,6 +136,7 @@ const INITIAL_EXAMS = [
                 options: ['pi/4', 'pi/2', '0', '1'],
                 correctOption: 0,
                 marks: 10,
+                topic: 'Calculus',
                 solutionExplanation: 'Let I = ∫[0 to π/2] (sin x / (sin x + cos x)) dx. Using the property ∫[a to b] f(x) dx = ∫[a to b] f(a+b-x) dx, we get I = ∫[0 to π/2] (sin(π/2-x) / (sin(π/2-x) + cos(π/2-x))) dx = ∫[0 to π/2] (cos x / (cos x + sin x)) dx. Adding the two expressions for I gives: 2I = ∫[0 to π/2] ((sin x + cos x) / (sin x + cos x)) dx = ∫[0 to π/2] 1 dx = π/2. Therefore, I = π/4.'
             },
             {
@@ -91,6 +145,7 @@ const INITIAL_EXAMS = [
                 options: ['sin(x)', 'x^3 + x', 'x^2', 'e^(-x)'],
                 correctOption: 1,
                 marks: 10,
+                topic: 'Calculus',
                 solutionExplanation: 'A function f(x) is strictly increasing if its derivative f\'(x) > 0 for all x. Let\'s find the derivative for f(x) = x³ + x. f\'(x) = 3x² + 1. Since x² is always non-negative, 3x² + 1 >= 1 > 0 for all real x. Thus, x³ + x is strictly increasing. Others are not strictly increasing everywhere: sin(x) oscillates, x² decreases for x<0, and e^(-x) is strictly decreasing.'
             }
         ]
@@ -111,6 +166,7 @@ const INITIAL_EXAMS = [
                 options: ['Retention of configuration', 'Racemic mixture', 'Inversion of configuration', 'No reaction'],
                 correctOption: 2,
                 marks: 10,
+                topic: 'Reaction Mechanisms',
                 solutionExplanation: 'An SN2 (Substitution Nucleophilic Bimolecular) reaction involves a backside attack by the nucleophile on the carbon atom holding the leaving group. This backside attack leads to a complete inversion of stereochemical configuration at the asymmetric carbon (commonly known as Walden Inversion).'
             },
             {
@@ -119,6 +175,7 @@ const INITIAL_EXAMS = [
                 options: ['Methyl carbocation', 'Primary carbocation', 'Secondary carbocation', 'Tertiary (3°) benzyl carbocation'],
                 correctOption: 3,
                 marks: 10,
+                topic: 'Organic Concepts',
                 solutionExplanation: 'The stability of carbocations increases in the order: Methyl < Primary < Secondary < Tertiary. Furthermore, resonance structures stabilize a carbocation. A tertiary (3°) benzyl carbocation has both the positive charge on a tertiary carbon (3° alkyl stabilization) and is adjacent to a benzene ring, allowing the positive charge to be delocalized extensively throughout the π-system of the aromatic ring, making it extremely stable.'
             },
             {
@@ -127,6 +184,7 @@ const INITIAL_EXAMS = [
                 options: ['Diastereomers', 'Enantiomers', 'Mesomers', 'Tautomers'],
                 correctOption: 1,
                 marks: 10,
+                topic: 'Stereochemistry',
                 solutionExplanation: 'Enantiomers are stereoisomers that are non-superimposable mirror images of one another. They possess identical physical properties (like boiling point, melting point, density) in an achiral environment, but differ in the direction in which they rotate plane-polarized light and in their interactions with other chiral molecules.'
             }
         ]
@@ -147,6 +205,7 @@ const INITIAL_EXAMS = [
                 options: ['Zero', 'Negative', 'Positive', 'Infinity'],
                 correctOption: 3,
                 marks: 10,
+                topic: 'Optics',
                 solutionExplanation: 'The focal length of a plane mirror is infinity as parallel rays of light reflecting off a plane mirror do not actually converge at any point.'
             },
             {
@@ -155,6 +214,7 @@ const INITIAL_EXAMS = [
                 options: ['Concave', 'Convex', 'Plane', 'Cylindrical'],
                 correctOption: 1,
                 marks: 10,
+                topic: 'Optics',
                 solutionExplanation: 'Convex mirrors are used in vehicles because they always form an erect, virtual, and diminished image, providing a wider field of view.'
             }
         ]
@@ -162,6 +222,45 @@ const INITIAL_EXAMS = [
 ];
 
 const INITIAL_RESULTS = [
+    {
+        id: 'res-thermo-shm-priya',
+        studentId: 3,
+        studentName: 'Priya Sharma',
+        examId: 'exam-thermo-shm',
+        examTitle: 'Physics Mock Test - Thermodynamics & SHM',
+        score: 40,
+        totalMarks: 40,
+        percentage: 100,
+        passed: true,
+        date: new Date(Date.now() - 86400000).toLocaleDateString(),
+        answers: [0, 0, 0, 0] // Q1 correct, Q2 correct, Q3 correct, Q4 correct
+    },
+    {
+        id: 'res-thermo-shm-rajesh',
+        studentId: 2,
+        studentName: 'Rajesh Kumar',
+        examId: 'exam-thermo-shm',
+        examTitle: 'Physics Mock Test - Thermodynamics & SHM',
+        score: 20,
+        totalMarks: 40,
+        percentage: 50,
+        passed: true,
+        date: new Date(Date.now() - 86400000 * 2).toLocaleDateString(),
+        answers: [0, 0, 1, 1] // Q1 correct, Q2 correct, Q3 incorrect, Q4 incorrect (good at thermo, poor at SHM)
+    },
+    {
+        id: 'res-thermo-shm-aditya',
+        studentId: 11,
+        studentName: 'Aditya Deshmukh',
+        examId: 'exam-thermo-shm',
+        examTitle: 'Physics Mock Test - Thermodynamics & SHM',
+        score: 10,
+        totalMarks: 40,
+        percentage: 25,
+        passed: false,
+        date: new Date(Date.now() - 86400000 * 3).toLocaleDateString(),
+        answers: [1, 2, 0, 3] // Q1 incorrect, Q2 incorrect, Q3 correct, Q4 incorrect (poor at thermo, decent at SHM)
+    },
     {
         id: 'res-1',
         studentId: 2,
