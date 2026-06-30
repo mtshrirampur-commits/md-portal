@@ -152,7 +152,7 @@ function Login({ onLogin, onClose, instituteName }) {
                         marginBottom: '12px',
                         textAlign: 'center'
                     }}>
-                        Demo Access Credentials
+                        Access Credentials
                     </span>
 
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -176,7 +176,7 @@ function Login({ onLogin, onClose, instituteName }) {
                             onMouseOver={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.25)'}
                             onMouseOut={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)'}
                         >
-                            <i className="fas fa-user-cog"></i> Admin Demo
+                            <i className="fas fa-user-cog"></i> Admin
                         </button>
 
                         <button 
@@ -247,7 +247,7 @@ function Login({ onLogin, onClose, instituteName }) {
                             onMouseOver={(e) => e.currentTarget.style.background = 'rgba(168, 85, 247, 0.25)'}
                             onMouseOut={(e) => e.currentTarget.style.background = 'rgba(168, 85, 247, 0.15)'}
                         >
-                            <i className="fas fa-chalkboard-teacher"></i> Teacher Demo
+                            <i className="fas fa-chalkboard-teacher"></i> Teacher
                         </button>
                     </div>
                 </div>

@@ -221,7 +221,7 @@ function App() {
                                         </span>
                                         <h2 style={{ fontSize: '2.2rem', color: 'white', marginBottom: '12px' }}>Ready to test the platform right now?</h2>
                                         <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '650px' }}>
-                                            You can instantly test both roles. Click Login and use the <strong>Admin Demo</strong> or <strong>Student Demo</strong> auto-fill buttons!
+                                            You can instantly test both roles. Click Login and use the <strong>Admin</strong>, <strong>Teacher</strong>, or <strong>Student</strong> auto-fill buttons!
                                         </p>
                                     </div>
                                     <button 
