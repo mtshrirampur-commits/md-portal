@@ -141,7 +141,7 @@ function TeacherDashboard({ currentUser }) {
     const [newDpqText, setNewDpqText] = React.useState('');
     const [newDpqOptions, setNewDpqOptions] = React.useState(['', '', '', '']);
     const [newDpqCorrect, setNewDpqCorrect] = React.useState(0);
-    const [newDpqBatch, setNewDpqBatch] = React.useState('All Batches');
+    const [newDpqBatch, setNewDpqBatch] = React.useState(settings?.batches?.[0] || '');
     const [newDpqSolution, setNewDpqSolution] = React.useState('');
     const [dpqCreationMode, setDpqCreationMode] = React.useState('manual');
     const [dpqFileUrl, setDpqFileUrl] = React.useState('');
@@ -262,7 +262,7 @@ function TeacherDashboard({ currentUser }) {
     const [newExamTotalMarks, setNewExamTotalMarks] = React.useState(30);
     const [newExamPassingMarks, setNewExamPassingMarks] = React.useState(15);
     const [newExamDesc, setNewExamDesc] = React.useState('');
-    const [newExamBatch, setNewExamBatch] = React.useState('JEE Advanced 2026');
+    const [newExamBatch, setNewExamBatch] = React.useState(settings?.batches?.[0] || '');
     const [creationMode, setCreationMode] = React.useState('manual');
     const [examFileUrl, setExamFileUrl] = React.useState('');
     const [examFileType, setExamFileType] = React.useState('');
@@ -388,7 +388,7 @@ function TeacherDashboard({ currentUser }) {
             setNewExamScheduledDateStr('');
             setNewExamScheduledTimeStr('');
             setNewExamDesc('');
-            setNewExamBatch('JEE Advanced 2026');
+            setNewExamBatch(settings?.batches?.[0] || '');
             setCreationMode('manual');
             setExamFileUrl('');
             setExamFileType('');
@@ -752,12 +752,9 @@ function TeacherDashboard({ currentUser }) {
                                         value={newDpqBatch}
                                         onChange={e => setNewDpqBatch(e.target.value)}
                                     >
-                                        <option value="Class 8">Class 8</option>
-                                        <option value="Class 9">Class 9</option>
-                                        <option value="Class 10">Class 10</option>
-                                        <option value="JEE Advanced 2026">JEE Advanced 2026</option>
-                                        <option value="NEET Aspirants 2026">NEET Aspirants 2026</option>
-                                        <option value="MHT-CET 2026">MHT-CET 2026</option>
+                                        {(settings?.batches || []).map(b => (
+                                            <option key={b} value={b}>{b}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>
@@ -846,12 +843,9 @@ function TeacherDashboard({ currentUser }) {
                                         value={newExamBatch}
                                         onChange={e => setNewExamBatch(e.target.value)}
                                     >
-                                        <option value="Class 8">Class 8</option>
-                                        <option value="Class 9">Class 9</option>
-                                        <option value="Class 10">Class 10</option>
-                                        <option value="JEE Advanced 2026">JEE Advanced 2026</option>
-                                        <option value="NEET Aspirants 2026">NEET Aspirants 2026</option>
-                                        <option value="MHT-CET 2026">MHT-CET 2026</option>
+                                        {(settings?.batches || []).map(b => (
+                                            <option key={b} value={b}>{b}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>
@@ -1095,12 +1089,9 @@ function TeacherDashboard({ currentUser }) {
                                     style={{ background: '#111827', width: 'auto', display: 'inline-block' }}
                                 >
                                     <option value="All">All Batches</option>
-                                    <option value="Class 8">Class 8</option>
-                                    <option value="Class 9">Class 9</option>
-                                    <option value="Class 10">Class 10</option>
-                                    <option value="JEE Advanced 2026">JEE Advanced 2026</option>
-                                    <option value="NEET Aspirants 2026">NEET Aspirants 2026</option>
-                                    <option value="MHT-CET 2026">MHT-CET 2026</option>
+                                    {(settings?.batches || []).map(b => (
+                                        <option key={b} value={b}>{b}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>

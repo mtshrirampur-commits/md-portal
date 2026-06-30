@@ -52,7 +52,7 @@ function Admin({ currentUser, onSettingsChange }) {
     const [newStudentName, setNewStudentName] = React.useState('');
     const [newStudentUsername, setNewStudentUsername] = React.useState('');
     const [newStudentPassword, setNewStudentPassword] = React.useState('');
-    const [newStudentBatch, setNewStudentBatch] = React.useState('JEE Advanced 2026');
+    const [newStudentBatch, setNewStudentBatch] = React.useState(settings?.batches?.[0] || '');
     const [studentFilter, setStudentFilter] = React.useState('All');
     const [resultBatchFilter, setResultBatchFilter] = React.useState('All');
     
@@ -118,7 +118,7 @@ function Admin({ currentUser, onSettingsChange }) {
             setNewStudentName('');
             setNewStudentUsername('');
             setNewStudentPassword('');
-            setNewStudentBatch('JEE Advanced 2026');
+            setNewStudentBatch(settings?.batches?.[0] || '');
 
             setTimeout(() => setSuccessMessage(''), 5000);
         } catch (err) {
@@ -182,7 +182,7 @@ function Admin({ currentUser, onSettingsChange }) {
     const [newDpqSubject, setNewDpqSubject] = React.useState('Physics');
     const [newDpqOptions, setNewDpqOptions] = React.useState(['', '', '', '']);
     const [newDpqCorrect, setNewDpqCorrect] = React.useState(0);
-    const [newDpqBatch, setNewDpqBatch] = React.useState('All Batches');
+    const [newDpqBatch, setNewDpqBatch] = React.useState(settings?.batches?.[0] || '');
     const [newDpqSolution, setNewDpqSolution] = React.useState('');
 
     const handleNewDpqOptionChange = (idx, val) => {
@@ -1346,8 +1346,9 @@ function Admin({ currentUser, onSettingsChange }) {
                                         style={{ background: '#111827', cursor: 'pointer' }}
                                     >
                                         <option value="All Batches">All Batches</option>
-                                        <option value="JEE Advanced 2026">JEE Advanced 2026</option>
-                                        <option value="NEET Aspirants 2026">NEET Aspirants 2026</option>
+                                        {(settings?.batches || []).map(b => (
+                                            <option key={b} value={b}>{b}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -1414,12 +1415,9 @@ function Admin({ currentUser, onSettingsChange }) {
                                         style={{ background: '#111827', width: 'auto', display: 'inline-block' }}
                                     >
                                         <option value="All">All Batches</option>
-                                        <option value="Class 8">Class 8</option>
-                                        <option value="Class 9">Class 9</option>
-                                        <option value="Class 10">Class 10</option>
-                                        <option value="JEE Advanced 2026">JEE Advanced 2026</option>
-                                        <option value="NEET Aspirants 2026">NEET Aspirants 2026</option>
-                                        <option value="MHT-CET 2026">MHT-CET 2026</option>
+                                        {(settings?.batches || []).map(b => (
+                                            <option key={b} value={b}>{b}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -1644,12 +1642,9 @@ function Admin({ currentUser, onSettingsChange }) {
                                     style={{ background: '#111827', width: 'auto', display: 'inline-block' }}
                                 >
                                     <option value="All">All Students</option>
-                                    <option value="Class 8">Class 8</option>
-                                    <option value="Class 9">Class 9</option>
-                                    <option value="Class 10">Class 10</option>
-                                    <option value="JEE">JEE Batch</option>
-                                    <option value="NEET">NEET Batch</option>
-                                    <option value="MHT-CET">MHT-CET Batch</option>
+                                    {(settings?.batches || []).map(b => (
+                                        <option key={b} value={b}>{b}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -1753,12 +1748,9 @@ function Admin({ currentUser, onSettingsChange }) {
                                             onChange={e => setNewStudentBatch(e.target.value)}
                                             style={{ background: '#111827', cursor: 'pointer' }}
                                         >
-                                            <option value="Class 8">Class 8</option>
-                                            <option value="Class 9">Class 9</option>
-                                            <option value="Class 10">Class 10</option>
-                                            <option value="JEE Advanced 2026">JEE Advanced 2026</option>
-                                            <option value="NEET Aspirants 2026">NEET Aspirants 2026</option>
-                                            <option value="MHT-CET 2026">MHT-CET 2026</option>
+                                            {(settings?.batches || []).map(b => (
+                                                <option key={b} value={b}>{b}</option>
+                                            ))}
                                         </select>
                                     </div>
 
@@ -2112,6 +2104,48 @@ function Admin({ currentUser, onSettingsChange }) {
                                         value={settings.contactNumbers}
                                         onChange={e => setSettings({...settings, contactNumbers: e.target.value})}
                                     />
+                                </div>
+                                
+                                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '24px', marginTop: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                        <h3 style={{ color: 'white', margin: 0 }}>Batch Management</h3>
+                                        <button 
+                                            type="button" 
+                                            className="btn-secondary" 
+                                            onClick={() => {
+                                                const newBatch = window.prompt("Enter new batch name:");
+                                                if(newBatch && newBatch.trim()) {
+                                                    setSettings({
+                                                        ...settings, 
+                                                        batches: [...(settings.batches||[]), newBatch.trim()]
+                                                    });
+                                                }
+                                            }}
+                                            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                                        >
+                                            <i className="fas fa-plus"></i> Add Batch
+                                        </button>
+                                    </div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                                        {(settings.batches || []).map((batch, idx) => (
+                                            <div key={idx} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', padding: '8px 16px', borderRadius: '8px', color: 'white', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <span>{batch}</span>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => {
+                                                        if(window.confirm(`Delete batch "${batch}"?`)) {
+                                                            const copy = [...(settings.batches||[])];
+                                                            copy.splice(idx, 1);
+                                                            setSettings({...settings, batches: copy});
+                                                        }
+                                                    }}
+                                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}
+                                                >
+                                                    <i className="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                                 
                                 <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '24px', marginTop: '12px' }}>

@@ -11,12 +11,18 @@ function App() {
     const [settings, setSettings] = React.useState({
         instituteName: "M&DTEST.com",
         contactNumbers: "",
-        topAchievers: []
+        topAchievers: [],
+        batches: ["Class 8 CBSE", "Class 8 STB", "Class 9 CBSE", "Class 9 STB", "Class 10 CBSE", "Class 10 STB", "11th JEE", "11th NEET", "11th MHT-CET", "12th JEE", "12th NEET", "12th MHT-CET"]
     });
 
     React.useEffect(() => {
         api.getSettings().then(data => {
-            if (data) setSettings(data);
+            if (data) {
+                if (!data.batches) {
+                    data.batches = ["Class 8 CBSE", "Class 8 STB", "Class 9 CBSE", "Class 9 STB", "Class 10 CBSE", "Class 10 STB", "11th JEE", "11th NEET", "11th MHT-CET", "12th JEE", "12th NEET", "12th MHT-CET"];
+                }
+                setSettings(data);
+            }
         });
     }, []);
 
@@ -244,7 +250,7 @@ function App() {
                 )}
 
                 {currentPage === 'teacher' && currentUser && currentUser.role === 'teacher' && (
-                    <TeacherDashboard currentUser={currentUser} />
+                    <TeacherDashboard currentUser={currentUser} settings={settings} />
                 )}
 
                 {currentPage === 'exam' && activeExam && currentUser && (
