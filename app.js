@@ -12,14 +12,14 @@ function App() {
         instituteName: "M&DTEST.com",
         contactNumbers: "",
         topAchievers: [],
-        batches: ["Class 8 CBSE", "Class 8 STB", "Class 9 CBSE", "Class 9 STB", "Class 10 CBSE", "Class 10 STB", "11th JEE", "11th NEET", "11th MHT-CET", "12th JEE", "12th NEET", "12th MHT-CET"]
+        batches: ["8TH CBSE/STB", "9TH CBSE", "9TH STB", "10TH CBSE", "10TH STB", "11TH JEE/MHTCET", "11TH NEET", "12TH JEE/MHTCET", "12TH NEET"]
     });
 
     React.useEffect(() => {
         api.getSettings().then(data => {
             if (data) {
                 if (!data.batches) {
-                    data.batches = ["Class 8 CBSE", "Class 8 STB", "Class 9 CBSE", "Class 9 STB", "Class 10 CBSE", "Class 10 STB", "11th JEE", "11th NEET", "11th MHT-CET", "12th JEE", "12th NEET", "12th MHT-CET"];
+                    data.batches = ["8TH CBSE/STB", "9TH CBSE", "9TH STB", "10TH CBSE", "10TH STB", "11TH JEE/MHTCET", "11TH NEET", "12TH JEE/MHTCET", "12TH NEET"];
                 }
                 setSettings(data);
             }

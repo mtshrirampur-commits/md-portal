@@ -2,7 +2,18 @@
     "settings": {
         "instituteName": "MAHESH & DHUMAL ACADEMICS",
         "contactNumbers": "9730411900, 9730811900",
-        "topAchievers": []
+        "topAchievers": [],
+        "batches": [
+            "8TH CBSE/STB",
+            "9TH CBSE",
+            "9TH STB",
+            "10TH CBSE",
+            "10TH STB",
+            "11TH JEE/MHTCET",
+            "11TH NEET",
+            "12TH JEE/MHTCET",
+            "12TH NEET"
+        ]
     },
     "users": [
         {
