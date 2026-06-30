@@ -55,6 +55,7 @@ function Admin({ currentUser, onSettingsChange }) {
     const [newStudentBatch, setNewStudentBatch] = React.useState(settings?.batches?.[0] || '');
     const [studentFilter, setStudentFilter] = React.useState('All');
     const [resultBatchFilter, setResultBatchFilter] = React.useState('All');
+    const [selectedStudents, setSelectedStudents] = React.useState(new Set());
     
     // Test-Specific Leaderboard states for Admin
     const [selectedLeaderboardExamId, setSelectedLeaderboardExamId] = React.useState('exam-thermo-shm');
@@ -171,8 +172,41 @@ function Admin({ currentUser, onSettingsChange }) {
             try {
                 await api.deleteUser(userId);
                 setUsers(prev => prev.filter(u => u.id !== userId));
+                setSelectedStudents(prev => {
+                    const next = new Set(prev);
+                    next.delete(userId);
+                    return next;
+                });
             } catch (err) {
                 alert('Failed to delete user from backend.');
+            }
+        }
+    };
+
+    const handleToggleStudentSelection = (id) => {
+        setSelectedStudents(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const handleBulkDeleteStudents = async () => {
+        if (selectedStudents.size === 0) return;
+        if (window.confirm(`Are you sure you want to permanently delete ${selectedStudents.size} selected student(s)?`)) {
+            try {
+                let deletedCount = 0;
+                for (let id of selectedStudents) {
+                    await api.deleteUser(id);
+                    deletedCount++;
+                }
+                const freshUsers = await api.getUsers();
+                setUsers(freshUsers);
+                setSelectedStudents(new Set());
+                alert(`Successfully deleted ${deletedCount} student(s).`);
+            } catch (err) {
+                alert('Failed to delete some users from backend. Please refresh and check.');
             }
         }
     };
@@ -1762,36 +1796,83 @@ function Admin({ currentUser, onSettingsChange }) {
 
                             {/* List of Students */}
                             <div className="glass-panel" style={{ padding: '32px' }}>
-                                <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '24px' }}>
-                                    <i className="fas fa-list-ul text-gradient" style={{ marginRight: '8px' }}></i> Active Students
-                                </h3>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                    <h3 style={{ fontSize: '1.35rem', color: 'white', margin: 0 }}>
+                                        <i className="fas fa-list-ul text-gradient" style={{ marginRight: '8px' }}></i> Active Students
+                                    </h3>
+                                    {selectedStudents.size > 0 && (
+                                        <button 
+                                            onClick={handleBulkDeleteStudents}
+                                            className="btn-danger"
+                                            style={{ padding: '8px 16px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                        >
+                                            <i className="fas fa-trash-alt"></i> Delete Selected ({selectedStudents.size})
+                                        </button>
+                                    )}
+                                </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    {users.filter(u => u.role === 'student' && (studentFilter === 'All' || (u.batch && u.batch.includes(studentFilter)))).length === 0 ? (
-                                        <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '24px' }}>
-                                            No student accounts found for this batch.
-                                        </div>
-                                    ) : (
-                                        users.filter(u => u.role === 'student' && (studentFilter === 'All' || (u.batch && u.batch.includes(studentFilter)))).map(t => (
-                                            <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', borderRadius: '12px' }}>
-                                                <div>
-                                                    <h4 style={{ color: 'white', margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: '600' }}>{t.name}</h4>
-                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block' }}>Username: <code>{t.username}</code></span>
-                                                    <span className="badge" style={{ display: 'inline-block', marginTop: '6px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', padding: '4px 10px', fontSize: '0.75rem' }}>
-                                                        <i className="fas fa-graduation-cap"></i> {t.batch || 'Unassigned'}
-                                                    </span>
+                                    {(() => {
+                                        const filteredList = users.filter(u => u.role === 'student' && (studentFilter === 'All' || (u.batch && u.batch.includes(studentFilter))));
+                                        if (filteredList.length === 0) {
+                                            return (
+                                                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '24px' }}>
+                                                    No student accounts found for this batch.
                                                 </div>
+                                            );
+                                        }
+                                        
+                                        const allSelected = filteredList.length > 0 && filteredList.every(u => selectedStudents.has(u.id));
+                                        
+                                        return (
+                                            <>
+                                                <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px' }}>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                                        <input 
+                                                            type="checkbox" 
+                                                            checked={allSelected}
+                                                            onChange={() => {
+                                                                if (allSelected) {
+                                                                    setSelectedStudents(new Set());
+                                                                } else {
+                                                                    setSelectedStudents(new Set(filteredList.map(u => u.id)));
+                                                                }
+                                                            }}
+                                                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                                        />
+                                                        Select All Visible
+                                                    </label>
+                                                </div>
+                                                {filteredList.map(t => (
+                                                    <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(0,0,0,0.2)', border: selectedStudents.has(t.id) ? '1px solid rgba(239,68,68,0.5)' : '1px solid var(--border-glass)', borderRadius: '12px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                            <input 
+                                                                type="checkbox"
+                                                                checked={selectedStudents.has(t.id)}
+                                                                onChange={() => handleToggleStudentSelection(t.id)}
+                                                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                                            />
+                                                            <div>
+                                                                <h4 style={{ color: 'white', margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: '600' }}>{t.name}</h4>
+                                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block' }}>Username: <code>{t.username}</code></span>
+                                                                <span className="badge" style={{ display: 'inline-block', marginTop: '6px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', padding: '4px 10px', fontSize: '0.75rem' }}>
+                                                                    <i className="fas fa-graduation-cap"></i> {t.batch || 'Unassigned'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
 
-                                                <button 
-                                                    onClick={() => handleDeleteUser(t.id, t.name)}
-                                                    className="btn-danger"
-                                                    style={{ padding: '8px 12px', fontSize: '0.8rem' }}
-                                                >
-                                                    <i className="fas fa-trash-alt"></i> Remove
-                                                </button>
-                                            </div>
-                                        ))
-                                    )}
+                                                        <button 
+                                                            onClick={() => handleDeleteUser(t.id, t.name)}
+                                                            className="btn-danger"
+                                                            style={{ padding: '8px 12px', fontSize: '0.8rem' }}
+                                                        >
+                                                            <i className="fas fa-trash-alt"></i> Remove
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </div>
