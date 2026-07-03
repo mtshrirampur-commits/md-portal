@@ -11,8 +11,14 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// Serve static frontend files from the root directory
-app.use(express.static(path.join(__dirname, '..')));
+// Serve static frontend files from the Vite build directory
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
+
+// Fallback to index.html for SPA routing
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) return;
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
+});
 
 // Mongoose Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://mtshrirampur_db_user:wXA9Dw4uXyNBILFU@cluster0.71smihn.mongodb.net/mdportal?retryWrites=true&w=majority&appName=Cluster0';
