@@ -124,6 +124,14 @@ app.post('/api/users', async (req, res) => {
     await User.create(user);
     res.status(201).json(user);
 });
+app.put('/api/users/:id', async (req, res) => {
+    const updated = await User.findOneAndUpdate(
+        { id: req.params.id.toString() }, 
+        { $set: req.body }, 
+        { new: true }
+    );
+    res.json(updated);
+});
 app.delete('/api/users/:id', async (req, res) => {
     await User.findOneAndDelete({ id: req.params.id.toString() });
     res.json({ success: true });

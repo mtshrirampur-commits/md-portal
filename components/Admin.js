@@ -183,6 +183,19 @@ function Admin({ currentUser, onSettingsChange }) {
         }
     };
 
+    const handleEditUserPassword = async (userId, userName) => {
+        const newPassword = window.prompt(`Enter new password for ${userName}:`);
+        if (newPassword && newPassword.trim() !== '') {
+            try {
+                await api.updateUser(userId, { password: newPassword.trim() });
+                setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword.trim() } : u));
+                alert(`Password updated successfully for ${userName}`);
+            } catch (err) {
+                alert('Failed to update password.');
+            }
+        }
+    };
+
     const handleToggleStudentSelection = (id) => {
         setSelectedStudents(prev => {
             const next = new Set(prev);
@@ -1855,7 +1868,10 @@ function Admin({ currentUser, onSettingsChange }) {
                                                             <div>
                                                                 <h4 style={{ color: 'white', margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: '600' }}>{t.name}</h4>
                                                                 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block' }}>Username: <code>{t.username}</code></span>
-                                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block' }}>Password: <code>{t.password}</code></span>
+                                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block' }}>
+                                                                    Password: <code>{t.password}</code>
+                                                                    <i className="fas fa-edit" onClick={() => handleEditUserPassword(t.id, t.name)} style={{ marginLeft: '8px', cursor: 'pointer', color: '#60a5fa' }} title="Change Password"></i>
+                                                                </span>
                                                                 <span className="badge" style={{ display: 'inline-block', marginTop: '6px', background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', padding: '4px 10px', fontSize: '0.75rem' }}>
                                                                     <i className="fas fa-graduation-cap"></i> {t.batch || 'Unassigned'}
                                                                 </span>
@@ -1984,7 +2000,10 @@ function Admin({ currentUser, onSettingsChange }) {
                                                         <div>
                                                             <h4 style={{ color: 'white', margin: '0 0 4px 0', fontSize: '1.15rem', fontWeight: '600' }}>{t.name}</h4>
                                                             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block' }}>Username: <code>{t.username}</code></span>
-                                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>Password: <code>{t.password}</code></span>
+                                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>
+                                                                Password: <code>{t.password}</code>
+                                                                <i className="fas fa-edit" onClick={() => handleEditUserPassword(t.id, t.name)} style={{ marginLeft: '8px', cursor: 'pointer', color: '#60a5fa' }} title="Change Password"></i>
+                                                            </span>
                                                             <span className="badge" style={{ display: 'inline-block', background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '4px 10px', fontSize: '0.75rem' }}>
                                                                 <i className="fas fa-book-open"></i> {t.subject}
                                                             </span>

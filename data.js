@@ -376,6 +376,25 @@ const api = {
             return newUser;
         }
     },
+    async updateUser(id, updates) {
+        try {
+            const response = await fetch(`${API_BASE}/users/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            });
+            if (!response.ok) throw new Error('Network response was not ok');
+            const updatedUser = await response.json();
+            const users = getStorage('apex_users', INITIAL_USERS);
+            saveStorage('apex_users', users.map(u => u.id === id ? { ...u, ...updates } : u));
+            return updatedUser;
+        } catch (error) {
+            console.warn('Failed to update user on backend, updating local store:', error);
+            const users = getStorage('apex_users', INITIAL_USERS);
+            saveStorage('apex_users', users.map(u => u.id === id ? { ...u, ...updates } : u));
+            return { id, ...updates };
+        }
+    },
     async deleteUser(id) {
         try {
             const response = await fetch(`${API_BASE}/users/${id}`, {
