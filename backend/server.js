@@ -143,6 +143,20 @@ app.delete('/api/users/:id', async (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/users/bulk-delete', async (req, res) => {
+    try {
+        const { userIds, batch } = req.body;
+        if (userIds && Array.isArray(userIds)) {
+            await User.deleteMany({ id: { $in: userIds } });
+        } else if (batch) {
+            await User.deleteMany({ batch: batch, role: 'student' });
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete users' });
+    }
+});
+
 // Exams
 app.get('/api/exams', async (req, res) => res.json(await Exam.find({}).sort({ _id: -1 })));
 app.post('/api/exams', async (req, res) => {

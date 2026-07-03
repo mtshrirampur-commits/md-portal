@@ -1744,6 +1744,54 @@ function Admin({ currentUser, onSettingsChange }) {
                                 </div>
                             </div>
 
+                            {/* Bulk Remove Card */}
+                            <div className="glass-panel" style={{ padding: '32px', gridColumn: '1 / -1', background: 'linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(220,38,38,0.05) 100%)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                                <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '8px' }}>
+                                    <i className="fas fa-trash-alt text-gradient" style={{ marginRight: '8px', color: '#ef4444' }}></i> Bulk Remove Students by Batch
+                                </h3>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
+                                    Permanently delete all students belonging to a specific batch.
+                                </p>
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <select 
+                                        id="bulkDeleteBatch"
+                                        className="input-premium" 
+                                        style={{ width: '250px' }}
+                                    >
+                                        <option value="">Select a batch...</option>
+                                        {settings.batches.map(b => (
+                                            <option key={b} value={b}>{b}</option>
+                                        ))}
+                                    </select>
+                                    <button 
+                                        className="btn-primary" 
+                                        style={{ padding: '12px 24px', background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', boxShadow: '0 0 20px rgba(239,68,68,0.3)' }}
+                                        onClick={async () => {
+                                            const batchSelect = document.getElementById('bulkDeleteBatch');
+                                            const batch = batchSelect.value;
+                                            if (!batch) return alert('Please select a batch first.');
+                                            
+                                            const batchStudents = users.filter(u => u.role === 'student' && u.batch === batch);
+                                            if (batchStudents.length === 0) return alert(`No students found in batch: ${batch}`);
+                                            
+                                            if (window.confirm(`Are you SURE you want to delete all ${batchStudents.length} students in ${batch}? This cannot be undone.`)) {
+                                                try {
+                                                    await api.bulkDeleteUsers({ batch });
+                                                    const freshUsers = await api.getUsers();
+                                                    setUsers(freshUsers);
+                                                    alert(`Successfully deleted ${batchStudents.length} students.`);
+                                                    batchSelect.value = '';
+                                                } catch (err) {
+                                                    alert('Failed to delete students.');
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <i className="fas fa-trash-alt"></i> Delete All in Batch
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Create Student Form */}
                             <div className="glass-panel" style={{ padding: '32px' }}>
                                 <h3 style={{ fontSize: '1.35rem', color: 'white', marginBottom: '24px' }}>

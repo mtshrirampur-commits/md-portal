@@ -404,13 +404,27 @@ const api = {
             const deleted = await response.json();
             const users = getStorage('apex_users', INITIAL_USERS);
             saveStorage('apex_users', users.filter(u => u.id !== id));
-            return deleted;
+            return { success: true };
         } catch (error) {
             console.warn('Failed to delete user from backend, deleting from local store:', error);
             const users = getStorage('apex_users', INITIAL_USERS);
             const filtered = users.filter(u => u.id !== id);
             saveStorage('apex_users', filtered);
             return { id };
+        }
+    },
+    async bulkDeleteUsers(payload) {
+        try {
+            const response = await fetch(`${API_BASE}/users/bulk-delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to bulk delete users:', error);
+            throw error;
         }
     },
     async getExams() {

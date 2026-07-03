@@ -2,6 +2,10 @@ function Login({ onLogin, onClose, instituteName }) {
     const [username, setUsername] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [error, setError] = React.useState('');
+    const [loginMode, setLoginMode] = React.useState('password'); // 'password' or 'otp'
+    const [otpStep, setOtpStep] = React.useState(1); // 1: Enter Username, 2: Enter OTP
+    const [generatedOtp, setGeneratedOtp] = React.useState('');
+    const [enteredOtp, setEnteredOtp] = React.useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -25,6 +29,47 @@ function Login({ onLogin, onClose, instituteName }) {
         setUsername(u);
         setPassword(p);
         setError('');
+        setLoginMode('password');
+    };
+
+    const handleSendOtp = async (e) => {
+        e.preventDefault();
+        setError('');
+        try {
+            const users = await api.getUsers();
+            const user = users.find(u => u.username === username.trim());
+            if (user) {
+                const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                setGeneratedOtp(otp);
+                setOtpStep(2);
+                console.log(`[DEV ONLY] OTP for ${username} is: ${otp}`);
+                alert(`OTP Sent! (For development purposes, your OTP is: ${otp})`);
+            } else {
+                setError('Username not found.');
+            }
+        } catch (err) {
+            setError('Failed to fetch users. Please try again.');
+        }
+    };
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        setError('');
+        if (enteredOtp === generatedOtp) {
+            try {
+                const users = await api.getUsers();
+                const user = users.find(u => u.username === username.trim());
+                if (user) {
+                    onLogin(user);
+                } else {
+                    setError('User not found.');
+                }
+            } catch (err) {
+                setError('Authentication failed.');
+            }
+        } else {
+            setError('Invalid OTP. Please try again.');
+        }
     };
 
     return (
@@ -74,9 +119,25 @@ function Login({ onLogin, onClose, instituteName }) {
                     <h2 style={{ fontSize: '1.8rem', color: 'white', marginBottom: '8px' }}>
                         Welcome to <span className="text-gradient">{instituteName || 'M&DTEST.com'}</span>
                     </h2>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                        Enter your username and password to access your exam portal.
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '16px' }}>
+                        {loginMode === 'password' ? 'Enter your username and password to access your exam portal.' : 'Log in securely using a One-Time Password.'}
                     </p>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                        <button 
+                            onClick={() => { setLoginMode('password'); setError(''); }}
+                            className={loginMode === 'password' ? 'btn-primary' : 'btn-secondary'}
+                            style={{ padding: '8px 16px', fontSize: '0.9rem', borderRadius: '8px' }}
+                        >
+                            Password Login
+                        </button>
+                        <button 
+                            onClick={() => { setLoginMode('otp'); setError(''); setOtpStep(1); setEnteredOtp(''); }}
+                            className={loginMode === 'otp' ? 'btn-primary' : 'btn-secondary'}
+                            style={{ padding: '8px 16px', fontSize: '0.9rem', borderRadius: '8px' }}
+                        >
+                            OTP Login
+                        </button>
+                    </div>
                 </div>
 
                 {error && (
@@ -97,45 +158,106 @@ function Login({ onLogin, onClose, instituteName }) {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div>
-                        <label className="input-label" htmlFor="username">
-                            <i className="fas fa-user" style={{ marginRight: '8px' }}></i> Username
-                        </label>
-                        <input 
-                            id="username"
-                            type="text"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            className="input-premium"
-                            placeholder="Enter username (e.g. admin / student)"
-                            required
-                        />
-                    </div>
+                {loginMode === 'password' ? (
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div>
+                            <label className="input-label" htmlFor="username">
+                                <i className="fas fa-user" style={{ marginRight: '8px' }}></i> Username
+                            </label>
+                            <input 
+                                id="username"
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                className="input-premium"
+                                placeholder="Enter username (e.g. admin / student)"
+                                required
+                            />
+                        </div>
 
-                    <div>
-                        <label className="input-label" htmlFor="password">
-                            <i className="fas fa-lock" style={{ marginRight: '8px' }}></i> Password
-                        </label>
-                        <input 
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="input-premium"
-                            placeholder="••••••••••••"
-                            required
-                        />
-                    </div>
+                        <div>
+                            <label className="input-label" htmlFor="password">
+                                <i className="fas fa-lock" style={{ marginRight: '8px' }}></i> Password
+                            </label>
+                            <input 
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="input-premium"
+                                placeholder="••••••••••••"
+                                required
+                            />
+                        </div>
 
-                    <button 
-                        type="submit"
-                        className="btn-primary"
-                        style={{ width: '100%', padding: '16px', fontSize: '1.1rem', marginTop: '10px' }}
-                    >
-                        <i className="fas fa-sign-in-alt"></i> Secure Login
-                    </button>
-                </form>
+                        <button 
+                            type="submit"
+                            className="btn-primary"
+                            style={{ width: '100%', padding: '16px', fontSize: '1.1rem', marginTop: '10px' }}
+                        >
+                            <i className="fas fa-sign-in-alt"></i> Secure Login
+                        </button>
+                    </form>
+                ) : (
+                    otpStep === 1 ? (
+                        <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div>
+                                <label className="input-label" htmlFor="otp-username">
+                                    <i className="fas fa-user" style={{ marginRight: '8px' }}></i> Username
+                                </label>
+                                <input 
+                                    id="otp-username"
+                                    type="text"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="input-premium"
+                                    placeholder="Enter your username"
+                                    required
+                                />
+                            </div>
+                            <button 
+                                type="submit"
+                                className="btn-primary"
+                                style={{ width: '100%', padding: '16px', fontSize: '1.1rem', marginTop: '10px' }}
+                            >
+                                <i className="fas fa-paper-plane"></i> Send OTP
+                            </button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div>
+                                <label className="input-label" htmlFor="otp-code">
+                                    <i className="fas fa-key" style={{ marginRight: '8px' }}></i> Enter OTP
+                                </label>
+                                <input 
+                                    id="otp-code"
+                                    type="text"
+                                    value={enteredOtp}
+                                    onChange={(e) => setEnteredOtp(e.target.value)}
+                                    className="input-premium"
+                                    placeholder="Enter 6-digit OTP"
+                                    maxLength="6"
+                                    required
+                                />
+                            </div>
+                            <button 
+                                type="submit"
+                                className="btn-primary"
+                                style={{ width: '100%', padding: '16px', fontSize: '1.1rem', marginTop: '10px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+                            >
+                                <i className="fas fa-check-circle"></i> Verify & Login
+                            </button>
+                            <button 
+                                type="button"
+                                className="btn-secondary"
+                                onClick={() => setOtpStep(1)}
+                                style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+                            >
+                                <i className="fas fa-arrow-left"></i> Back
+                            </button>
+                        </form>
+                    )
+                )}
 
                 {/* Quick Demo Helpers for User Assessment */}
                 <div style={{
