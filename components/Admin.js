@@ -2209,6 +2209,18 @@ function Admin({ currentUser, onSettingsChange }) {
                                 </div>
                                 
                                 <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '24px', marginTop: '12px' }}>
+                                    <h3 style={{ color: 'white', margin: '0 0 16px 0' }}>Admin Security</h3>
+                                    <button 
+                                        type="button" 
+                                        className="btn-secondary" 
+                                        onClick={() => handleEditUserPassword(currentUser.id, currentUser.name)}
+                                        style={{ padding: '10px 20px' }}
+                                    >
+                                        <i className="fas fa-key"></i> Change My Admin Password
+                                    </button>
+                                </div>
+                                
+                                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '24px', marginTop: '12px' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                                         <h3 style={{ color: 'white', margin: 0 }}>Batch Management</h3>
                                         <button 
