@@ -5,7 +5,7 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "build": "echo 'Skipping build, using pre-built dist'"
+    "build": "cd frontend && npm install && npm run build"
   },
   "dependencies": {
     "express": "^4.18.2",

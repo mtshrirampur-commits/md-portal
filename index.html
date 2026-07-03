@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M&DTEST.com - Premium Online Coaching Exam Platform</title>
+    <meta name="description" content="State-of-the-art online examination evaluation platform for coaching academies. Timed mock tests, rigorous analytics, and automated scorecards.">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- React 18 and Babel CDNs for Standalone Browser Execution -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- SheetJS for Excel bulk upload -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- Application Data and Components (Loaded via Babel JSX) -->
+    <script src="data.js"></script>
+    <script type="text/babel" src="components/Navbar.js"></script>
+    <script type="text/babel" src="components/Login.js"></script>
+    <script type="text/babel" src="components/Dashboard.js"></script>
+    <script type="text/babel" src="components/ExamTaking.js"></script>
+    <script type="text/babel" src="components/Admin.js"></script>
+    <script type="text/babel" src="components/TeacherDashboard.js"></script>
+    <script type="text/babel" src="app.js"></script>
+    
+    <!-- Initialize App -->
+    <script type="text/babel">
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
