@@ -6,17 +6,19 @@ function TeacherDashboard({ currentUser }) {
     const [users, setUsers] = React.useState([]);
     const [messages, setMessages] = React.useState([]);
     const [resultBatchFilter, setResultBatchFilter] = React.useState('All');
+    const [settings, setSettings] = React.useState({ batches: [] });
 
     React.useEffect(() => {
         async function loadTeacherData() {
             try {
-                const [fetchedExams, fetchedResults, fetchedDpqs, fetchedAttempts, fetchedUsers, fetchedMessages] = await Promise.all([
+                const [fetchedExams, fetchedResults, fetchedDpqs, fetchedAttempts, fetchedUsers, fetchedMessages, fetchedSettings] = await Promise.all([
                     api.getExams(),
                     api.getResults(),
                     api.getDpqs(),
                     api.getDpqAttempts(),
                     api.getUsers(),
-                    api.getMessagesForUser(currentUser.id)
+                    api.getMessagesForUser(currentUser.id),
+                    api.getSettings()
                 ]);
                 setExams(fetchedExams);
                 setResults(fetchedResults);
@@ -24,6 +26,7 @@ function TeacherDashboard({ currentUser }) {
                 setDpqAttempts(fetchedAttempts);
                 setUsers(fetchedUsers);
                 setMessages(fetchedMessages || []);
+                setSettings(fetchedSettings || { batches: [] });
             } catch (err) {
                 console.error('Failed to load teacher dashboard data:', err);
             }
