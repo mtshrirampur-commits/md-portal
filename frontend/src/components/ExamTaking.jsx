@@ -1340,9 +1340,9 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
     );
 }
 
-window.ExamTaking = function(props) {
+export default function ExamTaking(props) {
     if (props.exam && props.exam.fileUrl) {
         return <UploadedExamTaking {...props} />;
     }
     return <NTAExamTaking {...props} />;
-};
+}
