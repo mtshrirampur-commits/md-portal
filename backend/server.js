@@ -14,11 +14,7 @@ app.use(express.json({ limit: '50mb' }));
 // Serve static frontend files from the Vite build directory
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
 
-// Fallback to index.html for SPA routing
-app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) return;
-    res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
-});
+// Ensure static files are served correctly from Vite build directory
 
 // Mongoose Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://mtshrirampur_db_user:wXA9Dw4uXyNBILFU@cluster0.71smihn.mongodb.net/mdportal?retryWrites=true&w=majority&appName=Cluster0';
@@ -236,7 +232,7 @@ app.post('/api/upload', (req, res) => {
 // Fallback route for SPA
 app.get('*', (req, res) => {
     if (!req.path.startsWith('/api/')) {
-        res.sendFile(path.join(__dirname, '..', 'index.html'));
+        res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
     } else {
         res.status(404).json({ error: 'API route not found' });
     }
