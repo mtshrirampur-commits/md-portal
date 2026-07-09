@@ -1148,5 +1148,95 @@
             "date": "2026-05-26"
         }
     ],
-    "dpq_attempts": []
+    "dpq_attempts": [],
+    "pyps": [
+        {
+            "id": "pyp-1783582607544923",
+            "exam": "JEE Advanced",
+            "year": 2022,
+            "session": "Paper 1",
+            "subject": "PCM",
+            "icon": "fa-file-pdf",
+            "color": "#10b981",
+            "badge": "Official",
+            "url": "uploads/4da87f53-da8f-44d7-b0ef-f3e96baa3586_2022_1_JEE ADVANCE.pdf"
+        },
+        {
+            "id": "pyp-1783582607569357",
+            "exam": "JEE Advanced",
+            "year": 2022,
+            "session": "Paper 2",
+            "subject": "PCM",
+            "icon": "fa-file-pdf",
+            "color": "#10b981",
+            "badge": "Official",
+            "url": "uploads/08272943-2beb-4fec-b500-bd9378483ca7_2022_2_JEE ADVANCE.pdf"
+        },
+        {
+            "id": "pyp-1783582607593476",
+            "exam": "JEE Advanced",
+            "year": 2023,
+            "session": "Paper 1",
+            "subject": "PCM",
+            "icon": "fa-file-pdf",
+            "color": "#10b981",
+            "badge": "Official",
+            "url": "uploads/7573ad3b-5556-409a-bd11-1938d313db6d_2023_1_JEE ADVANCE.pdf"
+        },
+        {
+            "id": "pyp-1783582607607567",
+            "exam": "JEE Advanced",
+            "year": 2023,
+            "session": "Paper 2",
+            "subject": "PCM",
+            "icon": "fa-file-pdf",
+            "color": "#10b981",
+            "badge": "Official",
+            "url": "uploads/ed2153aa-8adb-45ea-845e-afa9400edfa0_2023_2_JEE ADVANCE.pdf"
+        },
+        {
+            "id": "pyp-1783582607624535",
+            "exam": "JEE Advanced",
+            "year": 2024,
+            "session": "Paper 1",
+            "subject": "PCM",
+            "icon": "fa-file-pdf",
+            "color": "#10b981",
+            "badge": "Official",
+            "url": "uploads/bbd82929-e1df-4302-9dae-e96cf0e4e5ae_2024_1_JEE ADVANCE.pdf"
+        },
+        {
+            "id": "pyp-1783582607666277",
+            "exam": "JEE Advanced",
+            "year": 2024,
+            "session": "Paper 2",
+            "subject": "PCM",
+            "icon": "fa-file-pdf",
+            "color": "#10b981",
+            "badge": "Official",
+            "url": "uploads/65aa6727-0189-45cd-a799-3966d5b32570_2024_2_JEE ADVANCE.pdf"
+        },
+        {
+            "id": "pyp-178358260768474",
+            "exam": "JEE Advanced",
+            "year": 2025,
+            "session": "Paper 1",
+            "subject": "PCM",
+            "icon": "fa-file-pdf",
+            "color": "#10b981",
+            "badge": "Official",
+            "url": "uploads/39f38828-6ced-4c7b-953c-44001e49308a_2025_1_JEE ADVANCE.pdf"
+        },
+        {
+            "id": "pyp-1783582607696202",
+            "exam": "JEE Advanced",
+            "year": 2025,
+            "session": "Paper 2",
+            "subject": "PCM",
+            "icon": "fa-file-pdf",
+            "color": "#10b981",
+            "badge": "Official",
+            "url": "uploads/26a9462b-3b7a-429b-b456-776a17b5070d_2025_2_JEE ADVANCE.pdf"
+        }
+    ]
 }

@@ -361,6 +361,8 @@ function Admin({ currentUser, onSettingsChange }) {
     const [newPypSubject, setNewPypSubject] = React.useState('PCM');
     const [newPypFileUrl, setNewPypFileUrl] = React.useState('');
     const [newPypFileType, setNewPypFileType] = React.useState('');
+    const [newPypAnsFileUrl, setNewPypAnsFileUrl] = React.useState('');
+    const [newPypAnsFileType, setNewPypAnsFileType] = React.useState('');
     const [isPypUploading, setIsPypUploading] = React.useState(false);
 
     const handlePypFileUpload = async (e) => {
@@ -392,10 +394,39 @@ function Admin({ currentUser, onSettingsChange }) {
         }
     };
 
+    const handlePypAnsFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setIsPypUploading(true);
+        try {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const base64 = reader.result;
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: file.name, data: base64 })
+                });
+                const resData = await response.json();
+                const ext = file.name.split('.').pop().toLowerCase();
+                setNewPypAnsFileUrl(resData.url);
+                setNewPypAnsFileType(ext);
+                setIsPypUploading(false);
+                setSuccessMessage('Answer Key uploaded successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
+            };
+        } catch (err) {
+            console.error(err);
+            alert('Failed to upload Answer Key file');
+            setIsPypUploading(false);
+        }
+    };
+
     const handleCreatePypSubmit = async (e) => {
         e.preventDefault();
         if (!newPypFileUrl) {
-            alert('Please upload a file before saving the PYQ.');
+            alert('Please upload a Question Paper file before saving the PYQ.');
             return;
         }
 
@@ -417,7 +448,8 @@ function Admin({ currentUser, onSettingsChange }) {
             icon: icon,
             color: color,
             badge: badge,
-            url: newPypFileUrl
+            url: newPypFileUrl,
+            ansUrl: newPypAnsFileUrl
         };
 
         try {
@@ -428,6 +460,8 @@ function Admin({ currentUser, onSettingsChange }) {
             setNewPypSession('');
             setNewPypFileUrl('');
             setNewPypFileType('');
+            setNewPypAnsFileUrl('');
+            setNewPypAnsFileType('');
             setTimeout(() => setSuccessMessage(''), 5000);
         } catch (err) {
             alert('Failed to save PYQ to server.');
@@ -2277,6 +2311,25 @@ function Admin({ currentUser, onSettingsChange }) {
                                         )}
                                     </div>
 
+                                    <div>
+                                        <label className="input-label">Upload Answer Key PDF (Optional)</label>
+                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                            <label className="btn-secondary" style={{ padding: '12px 20px', cursor: 'pointer', flex: 1, justifyContent: 'center' }}>
+                                                {isPypUploading ? (
+                                                    <><i className="fas fa-spinner fa-spin"></i> Uploading...</>
+                                                ) : (
+                                                    <><i className="fas fa-key"></i> Browse File</>
+                                                )}
+                                                <input type="file" style={{ display: 'none' }} accept=".pdf" onChange={handlePypAnsFileUpload} disabled={isPypUploading} />
+                                            </label>
+                                        </div>
+                                        {newPypAnsFileUrl && (
+                                            <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
+                                                <i className="fas fa-check-circle"></i> Answer Key uploaded and ready to save.
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <button type="submit" className="btn-primary" disabled={isPypUploading || !newPypFileUrl} style={{ padding: '14px', justifyContent: 'center', marginTop: '8px', opacity: (isPypUploading || !newPypFileUrl) ? 0.6 : 1 }}>
                                         <i className="fas fa-save"></i> Publish Paper
                                     </button>
@@ -2302,9 +2355,16 @@ function Admin({ currentUser, onSettingsChange }) {
                                                         {pyp.exam} {pyp.year}
                                                     </h4>
                                                     <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block' }}>{pyp.session} • {pyp.subject}</span>
-                                                    <a href={pyp.url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '8px', fontSize: '0.8rem', color: '#60a5fa', textDecoration: 'none' }}>
-                                                        <i className="fas fa-external-link-alt"></i> View File
-                                                    </a>
+                                                    <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                                                        <a href={pyp.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#60a5fa', textDecoration: 'none' }}>
+                                                            <i className="fas fa-file-alt"></i> Questions
+                                                        </a>
+                                                        {pyp.ansUrl && (
+                                                            <a href={pyp.ansUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#10b981', textDecoration: 'none' }}>
+                                                                <i className="fas fa-key"></i> Solutions
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 <button 

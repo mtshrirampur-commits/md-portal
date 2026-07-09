@@ -1848,30 +1848,57 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                                         </div>
                                     </div>
 
-                                    {/* Action Button */}
-                                    <a
-                                        href={paper.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{
-                                            display:'flex', alignItems:'center', justifyContent:'center', gap:'10px',
-                                            padding:'14px 20px',
-                                            borderRadius:'12px',
-                                            background:`linear-gradient(135deg, ${paper.color} 0%, ${paper.color}cc 100%)`,
-                                            color:'white',
-                                            textDecoration:'none',
-                                            fontWeight:'700',
-                                            fontSize:'0.95rem',
-                                            transition:'all 0.2s',
-                                            boxShadow:`0 4px 20px ${paper.color}30`,
-                                            marginTop:'4px'
-                                        }}
-                                        onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 8px 30px ${paper.color}50`; }}
-                                        onMouseOut={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow=`0 4px 20px ${paper.color}30`; }}
-                                    >
-                                        <i className="fas fa-arrow-up-right-from-square"></i>
-                                        Access {paper.year} Papers
-                                    </a>
+                                    {/* Action Buttons */}
+                                    <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                                        {paper.url && (
+                                            <a
+                                                href={paper.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{
+                                                    flex: 1,
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                                    padding: '12px 16px',
+                                                    borderRadius: '10px',
+                                                    background: `linear-gradient(135deg, ${paper.color} 0%, ${paper.color}cc 100%)`,
+                                                    color: 'white',
+                                                    textDecoration: 'none',
+                                                    fontWeight: '700',
+                                                    fontSize: '0.85rem',
+                                                    transition: 'all 0.2s',
+                                                    boxShadow: `0 4px 15px ${paper.color}30`
+                                                }}
+                                                onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 6px 20px ${paper.color}50`; }}
+                                                onMouseOut={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow=`0 4px 15px ${paper.color}30`; }}
+                                            >
+                                                <i className="fas fa-file-alt"></i> Questions
+                                            </a>
+                                        )}
+                                        {paper.ansUrl && (
+                                            <a
+                                                href={paper.ansUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{
+                                                    flex: 1,
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                                    padding: '12px 16px',
+                                                    borderRadius: '10px',
+                                                    background: 'rgba(255,255,255,0.1)',
+                                                    border: '1px solid rgba(255,255,255,0.2)',
+                                                    color: 'white',
+                                                    textDecoration: 'none',
+                                                    fontWeight: '700',
+                                                    fontSize: '0.85rem',
+                                                    transition: 'all 0.2s',
+                                                }}
+                                                onMouseOver={e => { e.currentTarget.style.background='rgba(255,255,255,0.15)'; e.currentTarget.style.transform='translateY(-2px)'; }}
+                                                onMouseOut={e => { e.currentTarget.style.background='rgba(255,255,255,0.1)'; e.currentTarget.style.transform='translateY(0)'; }}
+                                            >
+                                                <i className="fas fa-key"></i> Solutions
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
