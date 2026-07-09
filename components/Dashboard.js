@@ -88,7 +88,8 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     });
 
     const handleDpqSubmit = async (dpq) => {
-        if (selectedDpqOption === null) {
+        const hasOptions = dpq.options && dpq.options.length > 0;
+        if (hasOptions && selectedDpqOption === null) {
             alert('Please select an option.');
             return;
         }
@@ -1611,68 +1612,70 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                         </h2>
 
                         {/* Options */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
-                            {activeDpq.options.map((optText, idx) => {
-                                const isSelected = selectedDpqOption === idx;
-                                
-                                // Styling depending on submission status
-                                let borderStyle = '1px solid var(--border-glass)';
-                                let bgStyle = 'rgba(0,0,0,0.3)';
-                                let iconColor = 'var(--text-muted)';
-                                
-                                if (isDpqSubmitted) {
-                                    if (idx === activeDpq.correctOption) {
-                                        borderStyle = '2px solid #10b981';
-                                        bgStyle = 'rgba(16, 185, 129, 0.15)';
-                                        iconColor = '#10b981';
+                        {activeDpq.options && activeDpq.options.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+                                {activeDpq.options.map((optText, idx) => {
+                                    const isSelected = selectedDpqOption === idx;
+                                    
+                                    // Styling depending on submission status
+                                    let borderStyle = '1px solid var(--border-glass)';
+                                    let bgStyle = 'rgba(0,0,0,0.3)';
+                                    let iconColor = 'var(--text-muted)';
+                                    
+                                    if (isDpqSubmitted) {
+                                        if (idx === activeDpq.correctOption) {
+                                            borderStyle = '2px solid #10b981';
+                                            bgStyle = 'rgba(16, 185, 129, 0.15)';
+                                            iconColor = '#10b981';
+                                        } else if (isSelected) {
+                                            borderStyle = '2px solid #ef4444';
+                                            bgStyle = 'rgba(239, 68, 68, 0.15)';
+                                            iconColor = '#ef4444';
+                                        }
                                     } else if (isSelected) {
-                                        borderStyle = '2px solid #ef4444';
-                                        bgStyle = 'rgba(239, 68, 68, 0.15)';
-                                        iconColor = '#ef4444';
+                                        borderStyle = '2px solid #3b82f6';
+                                        bgStyle = 'rgba(59, 130, 246, 0.15)';
+                                        iconColor = '#3b82f6';
                                     }
-                                } else if (isSelected) {
-                                    borderStyle = '2px solid #3b82f6';
-                                    bgStyle = 'rgba(59, 130, 246, 0.15)';
-                                    iconColor = '#3b82f6';
-                                }
 
-                                return (
-                                    <div 
-                                        key={idx}
-                                        onClick={() => { if (!isDpqSubmitted) setSelectedDpqOption(idx); }}
-                                        style={{
-                                            padding: '16px 20px',
-                                            borderRadius: '12px',
-                                            background: bgStyle,
-                                            border: borderStyle,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '12px',
-                                            cursor: isDpqSubmitted ? 'default' : 'pointer',
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                    >
-                                        <div style={{
-                                            width: '20px',
-                                            height: '20px',
-                                            borderRadius: '50%',
-                                            border: isSelected || (isDpqSubmitted && idx === activeDpq.correctOption) ? `6px solid ${iconColor}` : '2px solid var(--text-muted)',
-                                            background: 'transparent',
-                                            flexShrink: 0
-                                        }} />
-                                        <span style={{ fontSize: '1.05rem', color: isSelected || (isDpqSubmitted && idx === activeDpq.correctOption) ? 'white' : 'var(--text-main)' }}>
-                                            {optText}
-                                        </span>
-                                        {isDpqSubmitted && idx === activeDpq.correctOption && (
-                                            <i className="fas fa-check-circle" style={{ marginLeft: 'auto', color: '#10b981', fontSize: '1.2rem' }}></i>
-                                        )}
-                                        {isDpqSubmitted && isSelected && idx !== activeDpq.correctOption && (
-                                            <i className="fas fa-times-circle" style={{ marginLeft: 'auto', color: '#ef4444', fontSize: '1.2rem' }}></i>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                    return (
+                                        <div 
+                                            key={idx}
+                                            onClick={() => { if (!isDpqSubmitted) setSelectedDpqOption(idx); }}
+                                            style={{
+                                                padding: '16px 20px',
+                                                borderRadius: '12px',
+                                                background: bgStyle,
+                                                border: borderStyle,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                cursor: isDpqSubmitted ? 'default' : 'pointer',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '50%',
+                                                border: isSelected || (isDpqSubmitted && idx === activeDpq.correctOption) ? `6px solid ${iconColor}` : '2px solid var(--text-muted)',
+                                                background: 'transparent',
+                                                flexShrink: 0
+                                            }} />
+                                            <span style={{ fontSize: '1.05rem', color: isSelected || (isDpqSubmitted && idx === activeDpq.correctOption) ? 'white' : 'var(--text-main)' }}>
+                                                {optText}
+                                            </span>
+                                            {isDpqSubmitted && idx === activeDpq.correctOption && (
+                                                <i className="fas fa-check-circle" style={{ marginLeft: 'auto', color: '#10b981', fontSize: '1.2rem' }}></i>
+                                            )}
+                                            {isDpqSubmitted && isSelected && idx !== activeDpq.correctOption && (
+                                                <i className="fas fa-times-circle" style={{ marginLeft: 'auto', color: '#ef4444', fontSize: '1.2rem' }}></i>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
 
                         {/* Solution section / Submit button */}
                         {isDpqSubmitted ? (
@@ -1681,8 +1684,15 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                                     <i className="fas fa-lightbulb"></i> Concept & Solution Explanation:
                                 </h4>
                                 <p style={{ color: 'var(--text-main)', fontSize: '1rem', lineHeight: '1.5', margin: 0 }}>
-                                    {activeDpq.solutionExplanation}
+                                    {activeDpq.solutionExplanation || 'Completed.'}
                                 </p>
+                                {activeDpq.ansUrl && (
+                                    <div style={{ marginTop: '16px' }}>
+                                        <a href={activeDpq.ansUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{ padding: '8px 16px', display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: '#10b981', border: '1px solid #10b981' }}>
+                                            <i className="fas fa-key"></i> View Official Answer Key
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <button 
@@ -1690,7 +1700,7 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                                 className="btn-primary"
                                 style={{ width: '100%', padding: '16px', fontSize: '1.1rem', justifyContent: 'center', background: 'var(--secondary-gradient)', boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' }}
                             >
-                                Submit Answer
+                                {activeDpq.options && activeDpq.options.length > 0 ? 'Submit Answer' : 'Mark as Completed'}
                             </button>
                         )}
                     </div>

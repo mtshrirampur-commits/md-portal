@@ -242,22 +242,26 @@ function Admin({ currentUser, onSettingsChange }) {
 
     const handleCreateDpqSubmit = async (e) => {
         e.preventDefault();
-        if (newDpqOptions.some(o => !o.trim())) {
+        if (adminDpqCreationMode === 'manual' && newDpqOptions.some(o => !o.trim())) {
             alert('Please complete all 4 options.');
             return;
         }
+
+        const optionsProvided = !newDpqOptions.some(o => !o.trim());
 
         const newDpq = {
             id: 'dpq-' + Date.now(),
             questionText: newDpqText.trim(),
             subject: newDpqSubject,
-            options: newDpqOptions.map(o => o.trim()),
-            correctOption: Number(newDpqCorrect),
+            options: optionsProvided ? newDpqOptions.map(o => o.trim()) : [],
+            correctOption: optionsProvided ? Number(newDpqCorrect) : -1,
             date: new Date().toLocaleDateString(),
             homeworkForBatch: newDpqBatch,
             solutionExplanation: newDpqSolution.trim(),
             fileUrl: adminDpqFileUrl,
-            fileType: adminDpqFileType
+            fileType: adminDpqFileType,
+            ansUrl: adminDpqAnsFileUrl,
+            ansFileType: adminDpqAnsFileType
         };
 
         try {
@@ -272,6 +276,8 @@ function Admin({ currentUser, onSettingsChange }) {
             setAdminDpqCreationMode('manual');
             setAdminDpqFileUrl('');
             setAdminDpqFileType('');
+            setAdminDpqAnsFileUrl('');
+            setAdminDpqAnsFileType('');
 
             setTimeout(() => setSuccessMessage(''), 5000);
             setActiveTab('overview');
@@ -302,6 +308,8 @@ function Admin({ currentUser, onSettingsChange }) {
     const [adminDpqCreationMode, setAdminDpqCreationMode] = React.useState('manual');
     const [adminDpqFileUrl, setAdminDpqFileUrl] = React.useState('');
     const [adminDpqFileType, setAdminDpqFileType] = React.useState('');
+    const [adminDpqAnsFileUrl, setAdminDpqAnsFileUrl] = React.useState('');
+    const [adminDpqAnsFileType, setAdminDpqAnsFileType] = React.useState('');
     const [isAdminDpqUploading, setIsAdminDpqUploading] = React.useState(false);
 
     const handleAdminFileUpload = async (e, target) => {
@@ -324,6 +332,9 @@ function Admin({ currentUser, onSettingsChange }) {
                 if (target === 'exam') {
                     setAdminExamFileUrl(resData.url);
                     setAdminExamFileType(ext);
+                } else if (target === 'dpqAns') {
+                    setAdminDpqAnsFileUrl(resData.url);
+                    setAdminDpqAnsFileType(ext);
                 } else {
                     setAdminDpqFileUrl(resData.url);
                     setAdminDpqFileType(ext);
@@ -1403,6 +1414,10 @@ function Admin({ currentUser, onSettingsChange }) {
                                     <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={e => handleAdminFileUpload(e, 'dpq')} style={{ color: 'white', marginBottom: '16px', width: '100%' }} />
                                     {isAdminDpqUploading && <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-spinner fa-spin"></i> Uploading...</span>}
                                     {adminDpqFileUrl && <div style={{ color: 'var(--success-color)', marginTop: '8px' }}><i className="fas fa-check-circle"></i> File uploaded successfully</div>}
+                                    
+                                    <h4 style={{ color: 'white', marginBottom: '16px', marginTop: '24px' }}><i className="fas fa-key" style={{ marginRight: '8px', color: '#10b981' }}></i>Upload Answer Key (Optional)</h4>
+                                    <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={e => handleAdminFileUpload(e, 'dpqAns')} style={{ color: 'white', marginBottom: '16px', width: '100%' }} />
+                                    {adminDpqAnsFileUrl && <div style={{ color: 'var(--success-color)', marginTop: '8px' }}><i className="fas fa-check-circle"></i> Answer Key uploaded successfully</div>}
                                 </div>
                             )}
 
@@ -1449,43 +1464,47 @@ function Admin({ currentUser, onSettingsChange }) {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="input-label">Multiple Choice Options (Select radio for correct answer)</label>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    {newDpqOptions.map((optText, optIdx) => (
-                                        <div key={optIdx} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.4)', padding: '12px 16px', borderRadius: '12px', border: newDpqCorrect === optIdx ? '1px solid #10b981' : '1px solid transparent' }}>
-                                            <input 
-                                                type="radio" 
-                                                name="dpq_correct_option"
-                                                checked={newDpqCorrect === optIdx}
-                                                onChange={() => setNewDpqCorrect(optIdx)}
-                                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                            />
-                                            <input 
-                                                type="text"
-                                                className="input-premium"
-                                                style={{ padding: '8px 12px', background: 'transparent', border: 'none' }}
-                                                placeholder={`Option ${optIdx + 1}`}
-                                                value={optText}
-                                                onChange={e => handleNewDpqOptionChange(optIdx, e.target.value)}
-                                                required
-                                            />
+                            {adminDpqCreationMode === 'manual' && (
+                                <>
+                                    <div>
+                                        <label className="input-label">Multiple Choice Options (Select radio for correct answer)</label>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                            {newDpqOptions.map((optText, optIdx) => (
+                                                <div key={optIdx} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.4)', padding: '12px 16px', borderRadius: '12px', border: newDpqCorrect === optIdx ? '1px solid #10b981' : '1px solid transparent' }}>
+                                                    <input 
+                                                        type="radio" 
+                                                        name="dpq_correct_option"
+                                                        checked={newDpqCorrect === optIdx}
+                                                        onChange={() => setNewDpqCorrect(optIdx)}
+                                                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                                    />
+                                                    <input 
+                                                        type="text"
+                                                        className="input-premium"
+                                                        style={{ padding: '8px 12px', background: 'transparent', border: 'none' }}
+                                                        placeholder={`Option ${optIdx + 1}`}
+                                                        value={optText}
+                                                        onChange={e => handleNewDpqOptionChange(optIdx, e.target.value)}
+                                                        required={adminDpqCreationMode === 'manual'}
+                                                    />
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                    </div>
 
-                            <div>
-                                <label className="input-label">Detailed Solution Explanation (Shown after answer submission)</label>
-                                <textarea 
-                                    rows="4"
-                                    className="input-premium"
-                                    placeholder="Provide step-by-step mathematical or conceptual hints and full solution..."
-                                    value={newDpqSolution}
-                                    onChange={e => setNewDpqSolution(e.target.value)}
-                                    required
-                                />
-                            </div>
+                                    <div>
+                                        <label className="input-label">Detailed Solution Explanation (Shown after answer submission)</label>
+                                        <textarea 
+                                            rows="4"
+                                            className="input-premium"
+                                            placeholder="Provide step-by-step mathematical or conceptual hints and full solution..."
+                                            value={newDpqSolution}
+                                            onChange={e => setNewDpqSolution(e.target.value)}
+                                            required={adminDpqCreationMode === 'manual'}
+                                        />
+                                    </div>
+                                </>
+                            )}
 
                             <button type="submit" className="btn-primary" style={{ padding: '20px', fontSize: '1.2rem', justifyContent: 'center', marginTop: '16px', background: 'var(--secondary-gradient)', boxShadow: '0 0 25px rgba(59, 130, 246, 0.4)' }}>
                                 <i className="fas fa-paper-plane"></i> Publish Practice Problem

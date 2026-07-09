@@ -151,6 +151,9 @@ function TeacherDashboard({ currentUser }) {
     const [dpqFileType, setDpqFileType] = React.useState('');
     const [isDpqUploading, setIsDpqUploading] = React.useState(false);
 
+    const [dpqAnsFileUrl, setDpqAnsFileUrl] = React.useState('');
+    const [dpqAnsFileType, setDpqAnsFileType] = React.useState('');
+
     const handleDpqFileUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -176,6 +179,35 @@ function TeacherDashboard({ currentUser }) {
         } catch (err) {
             console.error(err);
             alert('Failed to upload file');
+            setIsDpqUploading(false);
+        }
+    };
+
+    const handleDpqAnsFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setIsDpqUploading(true);
+        try {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const base64 = reader.result;
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: file.name, data: base64 })
+                });
+                const resData = await response.json();
+                setDpqAnsFileUrl(resData.url);
+                const ext = file.name.split('.').pop().toLowerCase();
+                setDpqAnsFileType(ext);
+                setIsDpqUploading(false);
+                setSuccessMessage('DPP Answer Key uploaded successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
+            };
+        } catch (err) {
+            console.error(err);
+            alert('Failed to upload answer key');
             setIsDpqUploading(false);
         }
     };
@@ -218,22 +250,26 @@ function TeacherDashboard({ currentUser }) {
 
     const handleCreateDpqSubmit = async (e) => {
         e.preventDefault();
-        if (newDpqOptions.some(o => !o.trim())) {
+        if (dpqCreationMode === 'manual' && newDpqOptions.some(o => !o.trim())) {
             alert('Please fill in all 4 options.');
             return;
         }
+
+        const optionsProvided = !newDpqOptions.some(o => !o.trim());
 
         const newDpq = {
             id: 'dpq-' + Date.now(),
             questionText: newDpqText.trim(),
             subject: subject, // Locked to teacher's subject
-            options: newDpqOptions.map(o => o.trim()),
-            correctOption: Number(newDpqCorrect),
+            options: optionsProvided ? newDpqOptions.map(o => o.trim()) : [],
+            correctOption: optionsProvided ? Number(newDpqCorrect) : -1,
             date: new Date().toLocaleDateString(),
             homeworkForBatch: newDpqBatch,
             solutionExplanation: newDpqSolution.trim(),
             fileUrl: dpqFileUrl,
-            fileType: dpqFileType
+            fileType: dpqFileType,
+            ansUrl: dpqAnsFileUrl,
+            ansFileType: dpqAnsFileType
         };
 
         try {
@@ -249,6 +285,8 @@ function TeacherDashboard({ currentUser }) {
             setDpqCreationMode('manual');
             setDpqFileUrl('');
             setDpqFileType('');
+            setDpqAnsFileUrl('');
+            setDpqAnsFileType('');
 
             setTimeout(() => setSuccessMessage(''), 5000);
             setActiveTab('overview');
@@ -732,6 +770,10 @@ function TeacherDashboard({ currentUser }) {
                                     <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleDpqFileUpload} style={{ color: 'white', marginBottom: '16px', width: '100%' }} />
                                     {isDpqUploading && <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-spinner fa-spin"></i> Uploading...</span>}
                                     {dpqFileUrl && <div style={{ color: 'var(--success-color)', marginTop: '8px' }}><i className="fas fa-check-circle"></i> File uploaded successfully</div>}
+                                    
+                                    <h4 style={{ color: 'white', marginBottom: '16px', marginTop: '24px' }}><i className="fas fa-key" style={{ marginRight: '8px', color: '#10b981' }}></i>Upload Answer Key (Optional)</h4>
+                                    <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleDpqAnsFileUpload} style={{ color: 'white', marginBottom: '16px', width: '100%' }} />
+                                    {dpqAnsFileUrl && <div style={{ color: 'var(--success-color)', marginTop: '8px' }}><i className="fas fa-check-circle"></i> Answer Key uploaded successfully</div>}
                                 </div>
                             )}
 
@@ -772,43 +814,47 @@ function TeacherDashboard({ currentUser }) {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="input-label" style={{ marginBottom: '16px' }}>Provide MCQ Options (Select the Radio Button corresponding to the correct answer)</label>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    {newDpqOptions.map((optText, optIdx) => (
-                                        <div key={optIdx} style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(0,0,0,0.2)', padding: '8px 16px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
-                                            <input 
-                                                type="radio" 
-                                                name="dpq_correct_option"
-                                                checked={newDpqCorrect === optIdx}
-                                                onChange={() => setNewDpqCorrect(optIdx)}
-                                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                            />
-                                            <input 
-                                                type="text"
-                                                className="input-premium"
-                                                style={{ padding: '8px 12px', background: 'transparent', border: 'none' }}
-                                                placeholder={`Option ${optIdx + 1}`}
-                                                value={optText}
-                                                onChange={e => handleNewDpqOptionChange(optIdx, e.target.value)}
-                                                required
-                                            />
+                            {dpqCreationMode === 'manual' && (
+                                <>
+                                    <div>
+                                        <label className="input-label" style={{ marginBottom: '16px' }}>Provide MCQ Options (Select the Radio Button corresponding to the correct answer)</label>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                            {newDpqOptions.map((optText, optIdx) => (
+                                                <div key={optIdx} style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(0,0,0,0.2)', padding: '8px 16px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
+                                                    <input 
+                                                        type="radio" 
+                                                        name="dpq_correct_option"
+                                                        checked={newDpqCorrect === optIdx}
+                                                        onChange={() => setNewDpqCorrect(optIdx)}
+                                                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                                    />
+                                                    <input 
+                                                        type="text"
+                                                        className="input-premium"
+                                                        style={{ padding: '8px 12px', background: 'transparent', border: 'none' }}
+                                                        placeholder={`Option ${optIdx + 1}`}
+                                                        value={optText}
+                                                        onChange={e => handleNewDpqOptionChange(optIdx, e.target.value)}
+                                                        required={dpqCreationMode === 'manual'}
+                                                    />
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                    </div>
 
-                            <div>
-                                <label className="input-label">Detailed Solution Explanation (Shown after answer submission)</label>
-                                <textarea 
-                                    rows="4"
-                                    className="input-premium"
-                                    placeholder="Provide step-by-step mathematical or conceptual hints and full solution..."
-                                    value={newDpqSolution}
-                                    onChange={e => setNewDpqSolution(e.target.value)}
-                                    required
-                                />
-                            </div>
+                                    <div>
+                                        <label className="input-label">Detailed Solution Explanation (Shown after answer submission)</label>
+                                        <textarea 
+                                            rows="4"
+                                            className="input-premium"
+                                            placeholder="Provide step-by-step mathematical or conceptual hints and full solution..."
+                                            value={newDpqSolution}
+                                            onChange={e => setNewDpqSolution(e.target.value)}
+                                            required={dpqCreationMode === 'manual'}
+                                        />
+                                    </div>
+                                </>
+                            )}
 
                             <button type="submit" className="btn-primary" style={{ padding: '16px', fontSize: '1.1rem', justifyContent: 'center', marginTop: '16px', background: 'var(--secondary-gradient)', boxShadow: '0 0 25px rgba(59, 130, 246, 0.4)' }}>
                                 <i className="fas fa-paper-plane"></i> Publish {subject} Practice Problem
