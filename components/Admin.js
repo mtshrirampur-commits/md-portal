@@ -610,7 +610,7 @@ function Admin({ currentUser, onSettingsChange }) {
                     </div>
 
                     {/* Action Navigation Tabs */}
-                    <div className="hide-on-mobile" style={{ display: 'flex', gap: '12px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+                    <div className="mobile-scrollable-tabs" style={{ display: 'flex', gap: '12px', background: 'rgba(0,0,0,0.4)', padding: '8px', borderRadius: '16px', border: '1px solid var(--border-glass)', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', paddingBottom: '12px' }}>
                         <button 
                             onClick={() => setActiveTab('overview')}
                             style={{
@@ -700,6 +700,21 @@ function Admin({ currentUser, onSettingsChange }) {
                             }}
                         >
                             <i className="fas fa-chalkboard-teacher" style={{ marginRight: '8px' }}></i> Manage Teachers
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('history')}
+                            style={{
+                                background: activeTab === 'history' ? 'var(--primary-gradient)' : 'transparent',
+                                color: activeTab === 'history' ? 'white' : 'var(--text-muted)',
+                                border: 'none',
+                                padding: '10px 20px',
+                                borderRadius: '12px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <i className="fas fa-history" style={{ marginRight: '8px' }}></i> Upload History
                         </button>
                         <button 
                             onClick={() => setActiveTab('manage_pyps')}
@@ -1947,9 +1962,18 @@ function Admin({ currentUser, onSettingsChange }) {
                 {/* TAB 5: MANAGE TEACHERS */}
                 {activeTab === 'teachers' && (
                     <div>
-                        <div style={{ marginBottom: '24px' }}>
-                            <h2 style={{ fontSize: '1.8rem', color: 'white' }}>Manage Academy Instructors</h2>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Provision and monitor teacher accounts for targeted subject performance tracking.</p>
+                        <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                            <div>
+                                <h2 style={{ fontSize: '1.8rem', color: 'white', margin: '0 0 8px 0' }}>Manage Academy Instructors</h2>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0 }}>Provision and monitor teacher accounts for targeted subject performance tracking.</p>
+                            </div>
+                            <button 
+                                onClick={() => setActiveTab('history')}
+                                className="btn-secondary"
+                                style={{ padding: '12px 24px', borderRadius: '12px' }}
+                            >
+                                <i className="fas fa-history"></i> View Upload History
+                            </button>
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px', alignItems: 'start' }}>
@@ -2056,13 +2080,22 @@ function Admin({ currentUser, onSettingsChange }) {
                                                                 <i className="fas fa-book-open"></i> {t.subject}
                                                             </span>
                                                         </div>
-                                                        <button 
-                                                            onClick={() => handleDeleteUser(t.id, t.name)}
-                                                            className="btn-danger"
-                                                            style={{ padding: '8px 12px', fontSize: '0.8rem', alignSelf: 'flex-start' }}
-                                                        >
-                                                            <i className="fas fa-trash-alt"></i> Remove
-                                                        </button>
+                                                        <div style={{ display: 'flex', gap: '8px', alignSelf: 'flex-start' }}>
+                                                            <button 
+                                                                onClick={() => setActiveTab('history')}
+                                                                className="btn-secondary"
+                                                                style={{ padding: '8px 12px', fontSize: '0.8rem' }}
+                                                            >
+                                                                <i className="fas fa-history"></i> History
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleDeleteUser(t.id, t.name)}
+                                                                className="btn-danger"
+                                                                style={{ padding: '8px 12px', fontSize: '0.8rem' }}
+                                                            >
+                                                                <i className="fas fa-trash-alt"></i> Remove
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                     
                                                     {/* Performance Metrics Grid */}
@@ -2083,6 +2116,71 @@ function Admin({ currentUser, onSettingsChange }) {
                                                             <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '4px', fontWeight: '600', letterSpacing: '0.5px' }}>Student Pass Rate</div>
                                                             <div style={{ color: '#f59e0b', fontSize: '1.25rem', fontWeight: '700' }}>{passRate}%</div>
                                                         </div>
+                                                    </div>
+
+                                                    {/* NEW SECTION FOR DETAILED UPLOAD LOGS */}
+                                                    <div style={{ marginTop: '16px', background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                        <h5 style={{ color: 'white', fontSize: '1rem', marginBottom: '12px', marginTop: 0 }}>
+                                                            <i className="fas fa-history" style={{ color: '#a855f7', marginRight: '6px' }}></i> 
+                                                            Detailed Upload History
+                                                        </h5>
+                                                        
+                                                        {teacherExams > 0 || teacherDpqs > 0 ? (
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto', paddingRight: '8px' }}>
+                                                                {/* Exams uploaded */}
+                                                                {exams.filter(e => e.subject.toLowerCase() === t.subject.toLowerCase()).map(e => {
+                                                                    let uploadDate = 'Unknown Date';
+                                                                    if (e.id && e.id.startsWith('exam-')) {
+                                                                        const ts = parseInt(e.id.split('-')[1]);
+                                                                        if (!isNaN(ts)) {
+                                                                            uploadDate = new Date(ts).toLocaleDateString();
+                                                                        }
+                                                                    }
+                                                                    if (e.date) uploadDate = e.date;
+                                                                    
+                                                                    return (
+                                                                        <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '8px' }}>
+                                                                            <div style={{ display: 'flex', alignItems: 'center', flex: 1, marginRight: '16px', overflow: 'hidden' }}>
+                                                                                <span style={{ color: '#60a5fa', fontSize: '0.85rem', fontWeight: '600', marginRight: '8px', flexShrink: 0 }}>[Exam]</span>
+                                                                                <span style={{ color: 'white', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</span>
+                                                                            </div>
+                                                                            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexShrink: 0 }}>
+                                                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}><i className="fas fa-calendar-alt" style={{marginRight:'4px'}}></i>{uploadDate}</span>
+                                                                                <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.75rem', padding: '2px 8px' }}>{e.assignedBatch || 'All Batches'}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                                
+                                                                {/* DPQs uploaded */}
+                                                                {dpqs.filter(d => d.subject.toLowerCase() === t.subject.toLowerCase()).map(d => {
+                                                                    let uploadDate = d.date || 'Unknown Date';
+                                                                    if (d.id && d.id.startsWith('dpq-')) {
+                                                                        const ts = parseInt(d.id.split('-')[1]);
+                                                                        if (!isNaN(ts) && ts > 1000000000000) {
+                                                                            uploadDate = new Date(ts).toLocaleDateString();
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    return (
+                                                                        <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '8px' }}>
+                                                                            <div style={{ display: 'flex', alignItems: 'center', flex: 1, marginRight: '16px', overflow: 'hidden' }}>
+                                                                                <span style={{ color: '#a855f7', fontSize: '0.85rem', fontWeight: '600', marginRight: '8px', flexShrink: 0 }}>[DPP]</span>
+                                                                                <span style={{ color: 'white', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.questionText}</span>
+                                                                            </div>
+                                                                            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexShrink: 0 }}>
+                                                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}><i className="fas fa-calendar-alt" style={{marginRight:'4px'}}></i>{uploadDate}</span>
+                                                                                <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.75rem', padding: '2px 8px' }}>{d.homeworkForBatch || 'All Batches'}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        ) : (
+                                                            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                                                                No exams or DPPs uploaded by this instructor yet.
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             );
@@ -2468,6 +2566,100 @@ function Admin({ currentUser, onSettingsChange }) {
                         </div>
                     </div>
                 )}
+
+                {/* TAB 8: UPLOAD HISTORY */}
+                {activeTab === 'history' && (
+                    <div className="animate-fade-in">
+                        <div style={{ marginBottom: '24px' }}>
+                            <h2 style={{ fontSize: '1.8rem', color: 'white' }}>Upload History</h2>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Detailed information of teachers on which date they uploaded and to which batch.</p>
+                        </div>
+
+                        <div className="glass-panel" style={{ padding: '32px' }}>
+                            {users.filter(u => u.role === 'teacher').length === 0 ? (
+                                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '24px' }}>
+                                    No teacher accounts provisioned yet.
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                    {users.filter(u => u.role === 'teacher').map(t => {
+                                        const teacherExams = exams.filter(e => e.subject.toLowerCase() === t.subject.toLowerCase());
+                                        const teacherDpqs = dpqs.filter(d => d.subject.toLowerCase() === t.subject.toLowerCase());
+
+                                        if (teacherExams.length === 0 && teacherDpqs.length === 0) {
+                                            return null;
+                                        }
+
+                                        return (
+                                            <div key={t.id} style={{ background: 'rgba(0,0,0,0.2)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '16px' }}>
+                                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--primary-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: 'white' }}>
+                                                        <i className="fas fa-chalkboard-teacher"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h3 style={{ color: 'white', margin: '0 0 4px 0', fontSize: '1.25rem' }}>{t.name}</h3>
+                                                        <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '4px 10px', fontSize: '0.75rem' }}>
+                                                            {t.subject}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                    {teacherExams.map(e => {
+                                                        let uploadDate = 'Unknown Date';
+                                                        if (e.id && e.id.startsWith('exam-')) {
+                                                            const ts = parseInt(e.id.split('-')[1]);
+                                                            if (!isNaN(ts)) {
+                                                                uploadDate = new Date(ts).toLocaleDateString();
+                                                            }
+                                                        }
+                                                        if (e.date) uploadDate = e.date;
+                                                        
+                                                        return (
+                                                            <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '8px' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', flex: 1, marginRight: '16px', overflow: 'hidden' }}>
+                                                                    <span style={{ color: '#60a5fa', fontSize: '0.85rem', fontWeight: '600', marginRight: '12px', flexShrink: 0 }}>[Exam]</span>
+                                                                    <span style={{ color: 'white', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</span>
+                                                                </div>
+                                                                <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexShrink: 0 }}>
+                                                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}><i className="fas fa-calendar-alt" style={{marginRight:'6px'}}></i>{uploadDate}</span>
+                                                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem', padding: '4px 12px' }}>Batch: {e.assignedBatch || 'All Batches'}</span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    
+                                                    {teacherDpqs.map(d => {
+                                                        let uploadDate = d.date || 'Unknown Date';
+                                                        if (d.id && d.id.startsWith('dpq-')) {
+                                                            const ts = parseInt(d.id.split('-')[1]);
+                                                            if (!isNaN(ts) && ts > 1000000000000) {
+                                                                uploadDate = new Date(ts).toLocaleDateString();
+                                                            }
+                                                        }
+                                                        
+                                                        return (
+                                                            <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '8px' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', flex: 1, marginRight: '16px', overflow: 'hidden' }}>
+                                                                    <span style={{ color: '#a855f7', fontSize: '0.85rem', fontWeight: '600', marginRight: '12px', flexShrink: 0 }}>[DPP]</span>
+                                                                    <span style={{ color: 'white', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.questionText}</span>
+                                                                </div>
+                                                                <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexShrink: 0 }}>
+                                                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}><i className="fas fa-calendar-alt" style={{marginRight:'6px'}}></i>{uploadDate}</span>
+                                                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem', padding: '4px 12px' }}>Batch: {d.homeworkForBatch || 'All Batches'}</span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Mobile Bottom Navigation Bar - Visible only on Mobile */}
@@ -2499,6 +2691,13 @@ function Admin({ currentUser, onSettingsChange }) {
                 >
                     <i className="fas fa-poll"></i>
                     <span>Results</span>
+                </button>
+                <button 
+                    onClick={() => setActiveTab('history')}
+                    className={`mobile-bottom-nav-item ${activeTab === 'history' ? 'active' : ''}`}
+                >
+                    <i className="fas fa-history"></i>
+                    <span>History</span>
                 </button>
                 <button 
                     onClick={() => setActiveTab('students')}
