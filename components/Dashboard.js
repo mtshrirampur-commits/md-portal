@@ -1586,7 +1586,20 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                         {activeDpq.fileUrl && (
                             <div style={{ marginBottom: '24px', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border-glass)' }}>
                                 {activeDpq.fileType === 'pdf' ? (
-                                    <iframe src={activeDpq.fileUrl} width="100%" height="400" style={{ border: 'none', background: 'white' }}></iframe>
+                                    activeDpq.fileUrl.startsWith('data:') && activeDpq.fileUrl.length > 500000 ? (
+                                        <div style={{ background: 'rgba(0,0,0,0.3)', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                            <i className="fas fa-file-pdf" style={{ fontSize: '2.5rem', color: '#ef4444' }}></i>
+                                            <div style={{ flex: 1 }}>
+                                                <h4 style={{ color: 'white', margin: '0 0 4px 0' }}>PDF Question Paper</h4>
+                                                <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>The uploaded file is large. Please download to view.</p>
+                                            </div>
+                                            <a href={activeDpq.fileUrl} download="question-paper.pdf" className="btn-primary" style={{ padding: '10px 20px', textDecoration: 'none', fontSize: '0.9rem' }}>
+                                                <i className="fas fa-download"></i> Download PDF
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <iframe src={activeDpq.fileUrl} width="100%" height="400" style={{ border: 'none', background: 'white' }}></iframe>
+                                    )
                                 ) : ['jpg', 'jpeg', 'png'].includes(activeDpq.fileType) ? (
                                     <div style={{ background: 'white', padding: '12px', maxHeight: '450px', overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
                                         <img src={activeDpq.fileUrl} alt="DPP Question Paper" style={{ maxWidth: '100%', objectFit: 'contain' }} />

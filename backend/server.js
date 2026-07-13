@@ -13,6 +13,7 @@ app.use(express.json({ limit: '50mb' }));
 
 // Serve static frontend files from the Vite build directory
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Fallback to index.html for SPA routing
 app.get('*', (req, res) => {
@@ -242,8 +243,35 @@ app.put('/api/messages/:id/read', async (req, res) => {
     res.json({ success: true });
 });
 
-// Uploads (Fallback dummy upload endpoint returning static url or base64 if needed, but the frontend passes base64 currently. If the frontend handles base64, we just return what was sent or it's handled on client side)
+// Uploads
 app.post('/api/upload', (req, res) => {
+    const data = req.body.data;
+    if (data && typeof data === 'string' && data.startsWith('data:')) {
+        try {
+            const matches = data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+            if (matches && matches.length === 3) {
+                const mime = matches[1];
+                let ext = mime.split('/')[1] || 'bin';
+                if (ext === 'jpeg') ext = 'jpg';
+                else if (mime === 'application/pdf') ext = 'pdf';
+                else if (mime === 'application/msword') ext = 'doc';
+                else if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') ext = 'docx';
+
+                const buffer = Buffer.from(matches[2], 'base64');
+                const filename = `uploaded-${Date.now()}-${Math.floor(Math.random()*1000)}.${ext}`;
+                const uploadDir = path.join(__dirname, '..', 'uploads');
+                if (!fs.existsSync(uploadDir)) {
+                    fs.mkdirSync(uploadDir, { recursive: true });
+                }
+                const filepath = path.join(uploadDir, filename);
+                fs.writeFileSync(filepath, buffer);
+                return res.json({ url: `uploads/${filename}` });
+            }
+        } catch (e) {
+            console.error('Upload parsing error', e);
+        }
+    }
+    // Fallback
     res.json({ url: req.body.data });
 });
 
