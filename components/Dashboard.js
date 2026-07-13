@@ -22,10 +22,10 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                     api.getUsers()
                 ]);
                 setAllExams(fetchedExams);
-                setExams(fetchedExams.filter(e => e.assignedBatch === currentUser.batch));
+                setExams(fetchedExams.filter(e => e.assignedBatches && e.assignedBatches.includes(currentUser.batch)));
                 setAllResults(fetchedResults);
                 setResults(fetchedResults.filter(r => r.studentId === currentUser.id));
-                setDpqs(fetchedDpqs.filter(d => d.homeworkForBatch === currentUser.batch));
+                setDpqs(fetchedDpqs.filter(d => d.homeworkForBatches && d.homeworkForBatches.includes(currentUser.batch)));
                 setDpqAttempts(fetchedAttempts);
                 setPyps(fetchedPyps);
                 setMessages(fetchedMessages || []);
@@ -49,7 +49,7 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     
     // UI states for DPQ modal/drawer
     const [activeDpq, setActiveDpq] = React.useState(null);
-    const [selectedDpqOption, setSelectedDpqOption] = React.useState(null);
+    const [selectedDpqOptions, setSelectedDpqOptions] = React.useState({});
     const [isDpqSubmitted, setIsDpqSubmitted] = React.useState(false);
 
     // Navigation Tab state
@@ -88,17 +88,32 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     });
 
     const handleDpqSubmit = async (dpq) => {
-        const hasOptions = dpq.options && dpq.options.length > 0;
-        if (hasOptions && selectedDpqOption === null) {
+        const isMultiQuestion = dpq.questions && dpq.questions.length > 0;
+        const hasSingleOptions = dpq.options && dpq.options.length > 0;
+
+        if (isMultiQuestion) {
+            if (Object.keys(selectedDpqOptions).length < dpq.questions.length) {
+                alert('Please select an option for all questions.');
+                return;
+            }
+        } else if (hasSingleOptions && selectedDpqOptions[0] === undefined) {
             alert('Please select an option.');
             return;
         }
-        const isCorrect = selectedDpqOption === dpq.correctOption;
+
+        let isCorrect = false;
+        if (isMultiQuestion) {
+            isCorrect = dpq.questions.every((q, i) => q.correctOption === selectedDpqOptions[i]);
+        } else {
+            isCorrect = selectedDpqOptions[0] === dpq.correctOption;
+        }
+
         const newAttempt = {
             id: 'dpq-att-' + Date.now(),
             dpqId: dpq.id,
             studentId: currentUser.id,
-            selectedOption: selectedDpqOption,
+            selectedOption: selectedDpqOptions[0],
+            selectedOptions: selectedDpqOptions,
             correct: isCorrect,
             date: new Date().toISOString()
         };
@@ -146,10 +161,10 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
         setActiveDpq(dpq);
         const pastAttempt = dpqAttempts.find(a => a.dpqId === dpq.id && a.studentId === currentUser.id);
         if (pastAttempt) {
-            setSelectedDpqOption(pastAttempt.selectedOption);
+            setSelectedDpqOptions(pastAttempt.selectedOptions || { 0: pastAttempt.selectedOption });
             setIsDpqSubmitted(true);
         } else {
-            setSelectedDpqOption(null);
+            setSelectedDpqOptions({});
             setIsDpqSubmitted(false);
         }
     };
@@ -1543,8 +1558,10 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                     padding: '24px'
                 }}>
                     <div className="glass-panel animate-fade-in" style={{
-                        maxWidth: '680px',
+                        maxWidth: '800px',
                         width: '100%',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
                         padding: '40px',
                         position: 'relative',
                         boxShadow: '0 0 50px rgba(0,0,0,0.5)',
@@ -1625,10 +1642,10 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                         </h2>
 
                         {/* Options */}
-                        {activeDpq.options && activeDpq.options.length > 0 && (
+                        {(!activeDpq.questions || activeDpq.questions.length === 0) && activeDpq.options && activeDpq.options.length > 0 && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
                                 {activeDpq.options.map((optText, idx) => {
-                                    const isSelected = selectedDpqOption === idx;
+                                    const isSelected = selectedDpqOptions[0] === idx;
                                     
                                     // Styling depending on submission status
                                     let borderStyle = '1px solid var(--border-glass)';
@@ -1654,7 +1671,7 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                                     return (
                                         <div 
                                             key={idx}
-                                            onClick={() => { if (!isDpqSubmitted) setSelectedDpqOption(idx); }}
+                                            onClick={() => { if (!isDpqSubmitted) setSelectedDpqOptions({0: idx}); }}
                                             style={{
                                                 padding: '16px 20px',
                                                 borderRadius: '12px',
@@ -1693,6 +1710,21 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                         {/* Solution section / Submit button */}
                         {isDpqSubmitted ? (
                             <div className="animate-fade-in" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)', padding: '24px', borderRadius: '16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                    <h4 style={{ color: '#10b981', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem' }}>
+                                        <i className="fas fa-check-circle"></i> Assessment Complete
+                                    </h4>
+                                    <button 
+                                        onClick={() => {
+                                            setIsDpqSubmitted(false);
+                                            setSelectedDpqOptions({});
+                                        }}
+                                        className="btn-secondary animate-pulse" 
+                                        style={{ padding: '8px 16px', fontSize: '0.9rem', borderRadius: '8px', border: '1px solid #10b981', color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', cursor: 'pointer' }}
+                                    >
+                                        <i className="fas fa-redo" style={{ marginRight: '6px' }}></i> Reattempt
+                                    </button>
+                                </div>
                                 <h4 style={{ color: '#60a5fa', fontSize: '0.95rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '700' }}>
                                     <i className="fas fa-lightbulb"></i> Concept & Solution Explanation:
                                 </h4>

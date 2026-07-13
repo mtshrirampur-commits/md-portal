@@ -967,13 +967,13 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
 
     if (!isStarted) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', width: '100%', position: 'absolute', top: 0, left: 0, zIndex: 9999, background: '#eef2f6', color: '#333', fontFamily: 'Arial, sans-serif' }}>
-                <div style={{ background: 'white', padding: '48px', maxWidth: '600px', width: '90%', textAlign: 'center', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #ddd' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', width: '100%', position: 'absolute', top: 0, left: 0, zIndex: 9999, background: '#eef2f6', color: 'white', fontFamily: 'Arial, sans-serif' }}>
+                <div style={{ background: 'var(--glass-bg)', padding: '48px', maxWidth: '600px', width: '90%', textAlign: 'center', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #ddd' }}>
                     <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#ebf5ff', border: '2px solid #337ab7', color: '#337ab7', margin: '0 auto 24px auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem' }}>
                         <i className="fas fa-shield-alt"></i>
                     </div>
                     
-                    <h2 style={{ fontSize: '2rem', color: '#333', marginBottom: '16px', fontWeight: 'bold' }}>
+                    <h2 style={{ fontSize: '2rem', color: 'white', marginBottom: '16px', fontWeight: 'bold' }}>
                         Security Verification Check
                     </h2>
                     
@@ -985,21 +985,21 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
                         <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                             <i className="fas fa-expand" style={{ color: '#5cb85c', fontSize: '1.2rem', marginTop: '4px' }}></i>
                             <div>
-                                <strong style={{ color: '#333', display: 'block' }}>Mandatory Fullscreen Mode</strong>
+                                <strong style={{ color: 'white', display: 'block' }}>Mandatory Fullscreen Mode</strong>
                                 <span style={{ color: '#666', fontSize: '0.9rem' }}>The exam must be taken in fullscreen. Exiting fullscreen triggers a warning strike.</span>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                             <i className="fas fa-eye" style={{ color: '#337ab7', fontSize: '1.2rem', marginTop: '4px' }}></i>
                             <div>
-                                <strong style={{ color: '#333', display: 'block' }}>Active Window Focus</strong>
+                                <strong style={{ color: 'white', display: 'block' }}>Active Window Focus</strong>
                                 <span style={{ color: '#666', fontSize: '0.9rem' }}>Interacting with other apps, opening notifications, or switching tabs logs a warning strike.</span>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                             <i className="fas fa-ban" style={{ color: '#f0ad4e', fontSize: '1.2rem', marginTop: '4px' }}></i>
                             <div>
-                                <strong style={{ color: '#333', display: 'block' }}>Copy-Paste & Right-Click Blocked</strong>
+                                <strong style={{ color: 'white', display: 'block' }}>Copy-Paste & Right-Click Blocked</strong>
                                 <span style={{ color: '#666', fontSize: '0.9rem' }}>Text copying, selection, and developers console tools are fully disabled.</span>
                             </div>
                         </div>
@@ -1030,18 +1030,18 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
     const activeQuestion = exam.questions[currentQuestionIndex];
 
     const ntaStyles = {
-        container: { display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', position: 'absolute', top: 0, left: 0, zIndex: 9999, background: '#eef2f6', color: '#333', fontFamily: 'Arial, sans-serif' },
+        container: { display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', position: 'absolute', top: 0, left: 0, zIndex: 9999, background: '#eef2f6', color: 'white', fontFamily: 'Arial, sans-serif' },
         header: { display: 'flex', justifyContent: 'space-between', padding: '10px 20px', background: '#2c3e50', color: 'white', borderBottom: '4px solid #f39c12', alignItems: 'center' },
         mainArea: { display: 'flex', flex: 1, overflow: 'hidden' },
-        leftPane: { flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid #ccc', background: 'white' },
-        rightPane: { width: '320px', display: 'flex', flexDirection: 'column', background: '#e6f0fa', borderLeft: '2px solid #aec2d8' },
-        qHeader: { display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #ccc', background: '#dce7f3' },
+        leftPane: { flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid #ccc', background: 'var(--glass-bg)' },
+        rightPane: { width: '320px', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.1)', borderLeft: '2px solid #aec2d8' },
+        qHeader: { display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)' },
         qBody: { flex: 1, padding: '20px', overflowY: 'auto', fontSize: '1.1rem' },
-        bottomBar: { padding: '10px 20px', background: '#dce7f3', borderTop: '1px solid #ccc', display: 'flex', gap: '10px', justifyContent: 'space-between', flexWrap: 'wrap' },
+        bottomBar: { padding: '10px 20px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid #ccc', display: 'flex', gap: '10px', justifyContent: 'space-between', flexWrap: 'wrap' },
         btnSaveNext: { background: '#5cb85c', color: 'white', border: '1px solid #4cae4c', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' },
         btnSaveMark: { background: '#f0ad4e', color: 'white', border: '1px solid #eea236', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' },
         btnMarkNext: { background: '#337ab7', color: 'white', border: '1px solid #2e6da4', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' },
-        btnClear: { background: '#fff', color: '#333', border: '1px solid #ccc', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' },
+        btnClear: { background: '#fff', color: 'white', border: '1px solid rgba(255,255,255,0.2)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' },
         submitBtn: { background: '#d9534f', color: 'white', border: 'none', padding: '12px', width: '100%', fontSize: '1.1rem', cursor: 'pointer', fontWeight: 'bold', marginTop: 'auto' },
         paletteItem: { width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', cursor: 'pointer', margin: '4px', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)', color: 'white' }
     };
@@ -1113,7 +1113,7 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
             <div style={ntaStyles.mainArea}>
                 <div className="nta-left-pane" style={ntaStyles.leftPane}>
                     <div style={ntaStyles.qHeader}>
-                        <h3 style={{ margin: 0, color: '#333', fontSize: '1.1rem' }}>Question No. {currentQuestionIndex + 1}</h3>
+                        <h3 style={{ margin: 0, color: 'white', fontSize: '1.1rem' }}>Question No. {currentQuestionIndex + 1}</h3>
                         <span style={{ fontWeight: 'bold', color: '#2c3e50' }}>Marks: {activeQuestion.marks}</span>
                     </div>
                     
@@ -1203,7 +1203,7 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
                 {/* Right side Question palette pane */}
                 <div className={`nta-right-pane ${isPaletteOpen ? 'open' : ''}`} style={ntaStyles.rightPane}>
                     {/* Mobile Close Button */}
-                    <div className="show-on-mobile-flex" style={{ display: 'none', justifyContent: 'flex-end', padding: '10px 15px', background: '#dce7f3', borderBottom: '1px solid #ccc' }}>
+                    <div className="show-on-mobile-flex" style={{ display: 'none', justifyContent: 'flex-end', padding: '10px 15px', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                         <button 
                             onClick={() => setIsPaletteOpen(false)}
                             className="btn-secondary"
@@ -1213,10 +1213,10 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
                         </button>
                     </div>
 
-                    <div style={{ padding: '15px', background: 'white', borderBottom: '1px solid #ccc' }}>
+                    <div style={{ padding: '15px', background: 'var(--glass-bg)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                <div style={{ width: '25px', height: '25px', background: '#fff', border: '1px solid #ccc', clipPath: ntaStyles.paletteItem.clipPath, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{counts.not_visited}</div>
+                                <div style={{ width: '25px', height: '25px', background: '#fff', border: '1px solid rgba(255,255,255,0.2)', clipPath: ntaStyles.paletteItem.clipPath, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{counts.not_visited}</div>
                                 <span>Not Visited</span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -1240,11 +1240,11 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
                         </div>
                     </div>
                     
-                    <div style={{ padding: '10px', background: '#dce7f3', fontWeight: 'bold', color: '#333' }}>
+                    <div style={{ padding: '10px', background: 'rgba(0,0,0,0.3)', fontWeight: 'bold', color: 'white' }}>
                         Choose a Question
                     </div>
                     
-                    <div style={{ padding: '15px', display: 'flex', flexWrap: 'wrap', gap: '8px', overflowY: 'auto', flex: 1, background: '#e6f0fa', alignContent: 'flex-start' }}>
+                    <div style={{ padding: '15px', display: 'flex', flexWrap: 'wrap', gap: '8px', overflowY: 'auto', flex: 1, background: 'rgba(0,0,0,0.1)', alignContent: 'flex-start' }}>
                         {exam.questions.map((_, idx) => {
                             const status = questionStatuses[idx];
                             let bg = '#fff';
@@ -1253,10 +1253,10 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
                             let shape = ntaStyles.paletteItem.clipPath;
                             let hasDot = false;
 
-                            if (status === 'not_answered') { bg = '#d9534f'; color = 'white'; border = 'none'; }
-                            else if (status === 'answered') { bg = '#5cb85c'; color = 'white'; border = 'none'; }
-                            else if (status === 'marked') { bg = '#8e44ad'; color = 'white'; border = 'none'; shape = 'circle(50% at 50% 50%)'; }
-                            else if (status === 'answered_marked') { bg = '#8e44ad'; color = 'white'; border = 'none'; shape = 'circle(50% at 50% 50%)'; hasDot = true; }
+                            if (status === 'not_answered') { bg = '#ef4444'; color = 'white'; border = 'none'; }
+                            else if (status === 'answered') { bg = '#10b981'; color = 'white'; border = 'none'; }
+                            else if (status === 'marked') { bg = '#8b5cf6'; color = 'white'; border = 'none'; shape = 'none'; }
+                            else if (status === 'answered_marked') { bg = '#8b5cf6'; color = 'white'; border = 'none'; shape = 'none'; hasDot = true; }
 
                             return (
                                 <div 
@@ -1290,7 +1290,7 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
 
             {showSummaryModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }}>
-                    <div style={{ background: 'white', width: '90%', maxWidth: '500px', borderRadius: '8px', overflow: 'hidden', color: '#333', fontFamily: 'Arial' }}>
+                    <div style={{ background: 'var(--glass-bg)', width: '90%', maxWidth: '500px', borderRadius: '8px', overflow: 'hidden', color: 'white', fontFamily: 'Arial' }}>
                         <div style={{ background: '#2c3e50', color: 'white', padding: '15px 20px', fontSize: '1.2rem', fontWeight: 'bold' }}>
                             Exam Summary
                         </div>
@@ -1299,35 +1299,35 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
                             <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
                                 <tbody>
                                     <tr>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px' }}>No. of Questions</td>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', fontWeight: 'bold' }}>{exam.questions.length}</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px' }}>No. of Questions</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', fontWeight: 'bold' }}>{exam.questions.length}</td>
                                     </tr>
                                     <tr>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', color: '#5cb85c', fontWeight: 'bold' }}>Answered</td>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', fontWeight: 'bold' }}>{counts.answered + counts.answered_marked}</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', color: '#5cb85c', fontWeight: 'bold' }}>Answered</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', fontWeight: 'bold' }}>{counts.answered + counts.answered_marked}</td>
                                     </tr>
                                     <tr>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', color: '#d9534f', fontWeight: 'bold' }}>Not Answered</td>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', fontWeight: 'bold' }}>{counts.not_answered}</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', color: '#d9534f', fontWeight: 'bold' }}>Not Answered</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', fontWeight: 'bold' }}>{counts.not_answered}</td>
                                     </tr>
                                     <tr>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', color: '#8e44ad', fontWeight: 'bold' }}>Marked for Review</td>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', fontWeight: 'bold' }}>{counts.marked}</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', color: '#8e44ad', fontWeight: 'bold' }}>Marked for Review</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', fontWeight: 'bold' }}>{counts.marked}</td>
                                     </tr>
                                     <tr>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', color: '#8e44ad', fontWeight: 'bold' }}>Answered & Marked for Review</td>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', fontWeight: 'bold' }}>{counts.answered_marked}</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', color: '#8e44ad', fontWeight: 'bold' }}>Answered & Marked for Review</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', fontWeight: 'bold' }}>{counts.answered_marked}</td>
                                     </tr>
                                     <tr>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', color: '#777', fontWeight: 'bold' }}>Not Visited</td>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px', fontWeight: 'bold' }}>{counts.not_visited}</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', color: '#777', fontWeight: 'bold' }}>Not Visited</td>
+                                        <td style={{ border: '1px solid rgba(255,255,255,0.2)', padding: '10px', fontWeight: 'bold' }}>{counts.not_visited}</td>
                                     </tr>
                                 </tbody>
                             </table>
                             <p style={{ color: '#d9534f', fontWeight: 'bold', margin: 0 }}>Are you sure you want to submit for final marking?</p>
                         </div>
                         <div style={{ padding: '15px 20px', background: '#f5f5f5', display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #ccc' }}>
-                            <button onClick={() => setShowSummaryModal(false)} style={{ padding: '10px 20px', border: '1px solid #ccc', background: 'white', borderRadius: '4px', cursor: 'pointer' }}>No, Go Back</button>
+                            <button onClick={() => setShowSummaryModal(false)} style={{ padding: '10px 20px', border: '1px solid rgba(255,255,255,0.2)', background: 'var(--glass-bg)', borderRadius: '4px', cursor: 'pointer' }}>No, Go Back</button>
                             <button onClick={() => handleSubmitExam(false)} style={{ padding: '10px 20px', border: 'none', background: '#5cb85c', color: 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Yes, Submit</button>
                         </div>
                     </div>

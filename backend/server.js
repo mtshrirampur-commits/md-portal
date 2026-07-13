@@ -34,13 +34,13 @@ mongoose.connect(MONGODB_URI, {
 const userSchema = new mongoose.Schema({ id: String, username: String, password: String, role: String, name: String, batch: String, subject: String }, { strict: false });
 const User = mongoose.model('User', userSchema);
 
-const examSchema = new mongoose.Schema({ id: String, title: String, subject: String, durationMinutes: Number, totalMarks: Number, passingMarks: Number, description: String, assignedBatch: String, scheduledDate: String, fileUrl: String, fileType: String, questions: Array }, { strict: false });
+const examSchema = new mongoose.Schema({ id: String, title: String, subject: String, durationMinutes: Number, totalMarks: Number, passingMarks: Number, description: String, assignedBatches: Array, scheduledDate: String, fileUrl: String, fileType: String, questions: Array }, { strict: false });
 const Exam = mongoose.model('Exam', examSchema);
 
 const resultSchema = new mongoose.Schema({ id: String, examId: String, studentId: String, examTitle: String, studentName: String, score: Number, totalMarks: Number, percentage: Number, passed: Boolean, date: String, answers: Object, timeSpent: Array }, { strict: false });
 const Result = mongoose.model('Result', resultSchema);
 
-const dpqSchema = new mongoose.Schema({ id: String, questionText: String, subject: String, options: Array, correctOption: Number, date: String, homeworkForBatch: String, solutionExplanation: String, fileUrl: String, fileType: String }, { strict: false });
+const dpqSchema = new mongoose.Schema({ id: String, questionText: String, subject: String, options: Array, correctOption: Number, date: String, homeworkForBatches: Array, solutionExplanation: String, fileUrl: String, fileType: String, questions: Array }, { strict: false });
 const Dpq = mongoose.model('Dpq', dpqSchema);
 
 const dpqAttemptSchema = new mongoose.Schema({ id: String, dpqId: String, studentId: String, selectedOption: Number, correct: Boolean, date: String }, { strict: false });

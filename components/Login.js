@@ -1,6 +1,7 @@
 function Login({ onLogin, onClose, instituteName }) {
     const [username, setUsername] = React.useState('');
     const [password, setPassword] = React.useState('');
+    const [showPassword, setShowPassword] = React.useState(false);
     const [error, setError] = React.useState('');
     const [loginMode, setLoginMode] = React.useState('password'); // 'password' or 'otp'
     const [otpStep, setOtpStep] = React.useState(1); // 1: Enter Username, 2: Enter OTP
@@ -179,15 +180,35 @@ function Login({ onLogin, onClose, instituteName }) {
                             <label className="input-label" htmlFor="password">
                                 <i className="fas fa-lock" style={{ marginRight: '8px' }}></i> Password
                             </label>
-                            <input 
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="input-premium"
-                                placeholder="••••••••••••"
-                                required
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <input 
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="input-premium"
+                                    placeholder="••••••••••••"
+                                    style={{ paddingRight: '40px' }}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '12px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--text-muted)',
+                                        cursor: 'pointer',
+                                        padding: '4px'
+                                    }}
+                                >
+                                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                </button>
+                            </div>
                         </div>
 
                         <button 

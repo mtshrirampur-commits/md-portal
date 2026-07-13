@@ -144,8 +144,10 @@ function TeacherDashboard({ currentUser }) {
     const [newDpqText, setNewDpqText] = React.useState('');
     const [newDpqOptions, setNewDpqOptions] = React.useState(['', '', '', '']);
     const [newDpqCorrect, setNewDpqCorrect] = React.useState(0);
-    const [newDpqBatch, setNewDpqBatch] = React.useState(settings?.batches?.[0] || '');
+    const [newDpqBatches, setNewDpqBatches] = React.useState([settings?.batches?.[0] || '']);
     const [newDpqSolution, setNewDpqSolution] = React.useState('');
+    const [dpqUploadNumQuestions, setDpqUploadNumQuestions] = React.useState(10);
+    const [dpqQuestions, setDpqQuestions] = React.useState([]);
     const [dpqCreationMode, setDpqCreationMode] = React.useState('manual');
     const [dpqFileUrl, setDpqFileUrl] = React.useState('');
     const [dpqFileType, setDpqFileType] = React.useState('');
@@ -248,6 +250,26 @@ function TeacherDashboard({ currentUser }) {
         }
     };
 
+    const generateDpqUploadQuestions = () => {
+        const num = Number(dpqUploadNumQuestions);
+        const newQs = [];
+        for (let i = 0; i < num; i++) {
+            newQs.push({
+                options: ['A', 'B', 'C', 'D'],
+                correctOption: 0
+            });
+        }
+        setDpqQuestions(newQs);
+    };
+
+    const handleDpqQuestionChange = (qIdx, optIdx) => {
+        setDpqQuestions(prev => {
+            const copy = [...prev];
+            copy[qIdx].correctOption = optIdx;
+            return copy;
+        });
+    };
+
     const handleCreateDpqSubmit = async (e) => {
         e.preventDefault();
         if (dpqCreationMode === 'manual' && newDpqOptions.some(o => !o.trim())) {
@@ -257,6 +279,11 @@ function TeacherDashboard({ currentUser }) {
 
         const optionsProvided = !newDpqOptions.some(o => !o.trim());
 
+        if (newDpqBatches.length === 0) {
+            alert('Please select at least one batch.');
+            return;
+        }
+
         const newDpq = {
             id: 'dpq-' + Date.now(),
             questionText: newDpqText.trim(),
@@ -264,12 +291,13 @@ function TeacherDashboard({ currentUser }) {
             options: optionsProvided ? newDpqOptions.map(o => o.trim()) : [],
             correctOption: optionsProvided ? Number(newDpqCorrect) : -1,
             date: new Date().toLocaleDateString(),
-            homeworkForBatch: newDpqBatch,
+            homeworkForBatches: newDpqBatches,
             solutionExplanation: newDpqSolution.trim(),
             fileUrl: dpqFileUrl,
             fileType: dpqFileType,
             ansUrl: dpqAnsFileUrl,
-            ansFileType: dpqAnsFileType
+            ansFileType: dpqAnsFileType,
+            questions: dpqCreationMode === 'upload' ? dpqQuestions : []
         };
 
         try {
@@ -303,7 +331,7 @@ function TeacherDashboard({ currentUser }) {
     const [newExamTotalMarks, setNewExamTotalMarks] = React.useState(30);
     const [newExamPassingMarks, setNewExamPassingMarks] = React.useState(15);
     const [newExamDesc, setNewExamDesc] = React.useState('');
-    const [newExamBatch, setNewExamBatch] = React.useState(settings?.batches?.[0] || '');
+    const [newExamBatches, setNewExamBatches] = React.useState([settings?.batches?.[0] || '']);
     const [creationMode, setCreationMode] = React.useState('manual');
     const [examFileUrl, setExamFileUrl] = React.useState('');
     const [examFileType, setExamFileType] = React.useState('');
@@ -397,11 +425,13 @@ function TeacherDashboard({ currentUser }) {
             }
         }
 
+        if (newExamBatches.length === 0) return alert('Please select at least one batch.');
+
         const newExam = {
             id: 'exam-' + Date.now(),
             title: newExamTitle.trim(),
             subject: subject, // Locked to teacher's subject
-            assignedBatch: newExamBatch,
+            assignedBatches: newExamBatches,
             durationMinutes: Number(newExamDuration),
             totalMarks: Number(newExamTotalMarks),
             passingMarks: Number(newExamPassingMarks),
@@ -774,6 +804,38 @@ function TeacherDashboard({ currentUser }) {
                                     <h4 style={{ color: 'white', marginBottom: '16px', marginTop: '24px' }}><i className="fas fa-key" style={{ marginRight: '8px', color: '#10b981' }}></i>Upload Answer Key (Optional)</h4>
                                     <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleDpqAnsFileUpload} style={{ color: 'white', marginBottom: '16px', width: '100%' }} />
                                     {dpqAnsFileUrl && <div style={{ color: 'var(--success-color)', marginTop: '8px' }}><i className="fas fa-check-circle"></i> Answer Key uploaded successfully</div>}
+
+                                    <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                                        <h4 style={{ color: 'white', marginBottom: '16px' }}><i className="fas fa-list-ol" style={{ marginRight: '8px', color: '#f59e0b' }}></i>Multiple Questions (Optional)</h4>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '12px' }}>If your uploaded paper has multiple questions, enter the number of questions to generate an answer grid for students to fill.</p>
+                                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
+                                            <input type="number" className="input-premium" style={{ width: '100px' }} value={dpqUploadNumQuestions} onChange={e => setDpqUploadNumQuestions(e.target.value)} min="1" />
+                                            <button type="button" onClick={generateDpqUploadQuestions} className="btn-secondary" style={{ padding: '12px 24px' }}>Generate Answer Grid</button>
+                                        </div>
+
+                                        {dpqQuestions.length > 0 && (
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px', marginTop: '16px' }}>
+                                                {dpqQuestions.map((q, qIdx) => (
+                                                    <div key={qIdx} style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                                        <div style={{ color: 'white', marginBottom: '8px', fontWeight: 'bold' }}>Q{qIdx + 1}</div>
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            {q.options.map((opt, optIdx) => (
+                                                                <label key={optIdx} style={{ color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
+                                                                    <input 
+                                                                        type="radio" 
+                                                                        name={`dpq_upload_q_${qIdx}`}
+                                                                        checked={q.correctOption === optIdx}
+                                                                        onChange={() => handleDpqQuestionChange(qIdx, optIdx)}
+                                                                    />
+                                                                    {opt}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
@@ -791,16 +853,23 @@ function TeacherDashboard({ currentUser }) {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                 <div>
-                                    <label className="input-label">Assigned Batch</label>
-                                    <select 
-                                        className="input-premium"
-                                        value={newDpqBatch}
-                                        onChange={e => setNewDpqBatch(e.target.value)}
-                                    >
+                                    <label className="input-label">Assigned Batches</label>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
                                         {(settings?.batches || []).map(b => (
-                                            <option key={b} value={b}>{b}</option>
+                                            <label key={b} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white', cursor: 'pointer' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={newDpqBatches.includes(b)}
+                                                    onChange={e => {
+                                                        if (e.target.checked) setNewDpqBatches(prev => [...prev, b]);
+                                                        else setNewDpqBatches(prev => prev.filter(x => x !== b));
+                                                    }}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
+                                                {b}
+                                            </label>
                                         ))}
-                                    </select>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="input-label">Locked Subject Department</label>
@@ -886,16 +955,23 @@ function TeacherDashboard({ currentUser }) {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                 <div>
-                                    <label className="input-label">Assigned Batch</label>
-                                    <select 
-                                        className="input-premium"
-                                        value={newExamBatch}
-                                        onChange={e => setNewExamBatch(e.target.value)}
-                                    >
+                                    <label className="input-label">Assigned Batches</label>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
                                         {(settings?.batches || []).map(b => (
-                                            <option key={b} value={b}>{b}</option>
+                                            <label key={b} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white', cursor: 'pointer' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={newExamBatches.includes(b)}
+                                                    onChange={e => {
+                                                        if (e.target.checked) setNewExamBatches(prev => [...prev, b]);
+                                                        else setNewExamBatches(prev => prev.filter(x => x !== b));
+                                                    }}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
+                                                {b}
+                                            </label>
                                         ))}
-                                    </select>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="input-label">Subject (Locked)</label>
