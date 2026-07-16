@@ -22,10 +22,10 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                     api.getUsers()
                 ]);
                 setAllExams(fetchedExams);
-                setExams(fetchedExams.filter(e => (e.assignedBatches && e.assignedBatches.includes(currentUser.batch)) || e.assignedBatch === currentUser.batch));
+                setExams(fetchedExams.filter(e => e.assignedBatch === currentUser.batch));
                 setAllResults(fetchedResults);
                 setResults(fetchedResults.filter(r => r.studentId === currentUser.id));
-                setDpqs(fetchedDpqs.filter(d => (d.homeworkForBatches && d.homeworkForBatches.includes(currentUser.batch)) || d.homeworkForBatch === currentUser.batch));
+                setDpqs(fetchedDpqs.filter(d => d.homeworkForBatch === currentUser.batch));
                 setDpqAttempts(fetchedAttempts);
                 setPyps(fetchedPyps);
                 setMessages(fetchedMessages || []);
@@ -49,7 +49,7 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     
     // UI states for DPQ modal/drawer
     const [activeDpq, setActiveDpq] = React.useState(null);
-    const [selectedDpqOptions, setSelectedDpqOptions] = React.useState({});
+    const [selectedDpqOption, setSelectedDpqOption] = React.useState(null);
     const [isDpqSubmitted, setIsDpqSubmitted] = React.useState(false);
 
     // Navigation Tab state
@@ -88,32 +88,16 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
     });
 
     const handleDpqSubmit = async (dpq) => {
-        const isMultiQuestion = dpq.questions && dpq.questions.length > 0;
-        const hasSingleOptions = dpq.options && dpq.options.length > 0;
-
-        if (isMultiQuestion) {
-            if (Object.keys(selectedDpqOptions).length < dpq.questions.length) {
-                alert('Please select an option for all questions.');
-                return;
-            }
-        } else if (hasSingleOptions && selectedDpqOptions[0] === undefined) {
+        if (selectedDpqOption === null) {
             alert('Please select an option.');
             return;
         }
-
-        let isCorrect = false;
-        if (isMultiQuestion) {
-            isCorrect = dpq.questions.every((q, i) => q.correctOption === selectedDpqOptions[i]);
-        } else {
-            isCorrect = selectedDpqOptions[0] === dpq.correctOption;
-        }
-
+        const isCorrect = selectedDpqOption === dpq.correctOption;
         const newAttempt = {
             id: 'dpq-att-' + Date.now(),
             dpqId: dpq.id,
             studentId: currentUser.id,
-            selectedOption: selectedDpqOptions[0],
-            selectedOptions: selectedDpqOptions,
+            selectedOption: selectedDpqOption,
             correct: isCorrect,
             date: new Date().toISOString()
         };
@@ -161,10 +145,10 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
         setActiveDpq(dpq);
         const pastAttempt = dpqAttempts.find(a => a.dpqId === dpq.id && a.studentId === currentUser.id);
         if (pastAttempt) {
-            setSelectedDpqOptions(pastAttempt.selectedOptions || { 0: pastAttempt.selectedOption });
+            setSelectedDpqOption(pastAttempt.selectedOption);
             setIsDpqSubmitted(true);
         } else {
-            setSelectedDpqOptions({});
+            setSelectedDpqOption(null);
             setIsDpqSubmitted(false);
         }
     };
@@ -1558,10 +1542,8 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                     padding: '24px'
                 }}>
                     <div className="glass-panel animate-fade-in" style={{
-                        maxWidth: '800px',
+                        maxWidth: '680px',
                         width: '100%',
-                        maxHeight: '90vh',
-                        overflowY: 'auto',
                         padding: '40px',
                         position: 'relative',
                         boxShadow: '0 0 50px rgba(0,0,0,0.5)',
@@ -1603,20 +1585,15 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                         {activeDpq.fileUrl && (
                             <div style={{ marginBottom: '24px', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border-glass)' }}>
                                 {activeDpq.fileType === 'pdf' ? (
-                                    activeDpq.fileUrl.startsWith('data:') && activeDpq.fileUrl.length > 500000 ? (
-                                        <div style={{ background: 'rgba(0,0,0,0.3)', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                            <i className="fas fa-file-pdf" style={{ fontSize: '2.5rem', color: '#ef4444' }}></i>
-                                            <div style={{ flex: 1 }}>
-                                                <h4 style={{ color: 'white', margin: '0 0 4px 0' }}>PDF Question Paper</h4>
-                                                <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>The uploaded file is large. Please download to view.</p>
-                                            </div>
-                                            <a href={activeDpq.fileUrl} download="question-paper.pdf" className="btn-primary" style={{ padding: '10px 20px', textDecoration: 'none', fontSize: '0.9rem' }}>
-                                                <i className="fas fa-download"></i> Download PDF
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <div style={{ padding: '8px', background: 'rgba(255,255,255,0.1)', borderBottom: '1px solid var(--border-glass)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
+                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>If the PDF doesn't load below:</span>
+                                            <a href={activeDpq.fileUrl} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ padding: '6px 16px', fontSize: '0.85rem', textDecoration: 'none', borderRadius: '20px' }}>
+                                                <i className="fas fa-external-link-alt"></i> Open PDF in New Tab
                                             </a>
                                         </div>
-                                    ) : (
                                         <iframe src={activeDpq.fileUrl} width="100%" height="400" style={{ border: 'none', background: 'white' }}></iframe>
-                                    )
+                                    </div>
                                 ) : ['jpg', 'jpeg', 'png'].includes(activeDpq.fileType) ? (
                                     <div style={{ background: 'white', padding: '12px', maxHeight: '450px', overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
                                         <img src={activeDpq.fileUrl} alt="DPP Question Paper" style={{ maxWidth: '100%', objectFit: 'contain' }} />
@@ -1642,102 +1619,78 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                         </h2>
 
                         {/* Options */}
-                        {(!activeDpq.questions || activeDpq.questions.length === 0) && activeDpq.options && activeDpq.options.length > 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
-                                {activeDpq.options.map((optText, idx) => {
-                                    const isSelected = selectedDpqOptions[0] === idx;
-                                    
-                                    // Styling depending on submission status
-                                    let borderStyle = '1px solid var(--border-glass)';
-                                    let bgStyle = 'rgba(0,0,0,0.3)';
-                                    let iconColor = 'var(--text-muted)';
-                                    
-                                    if (isDpqSubmitted) {
-                                        if (idx === activeDpq.correctOption) {
-                                            borderStyle = '2px solid #10b981';
-                                            bgStyle = 'rgba(16, 185, 129, 0.15)';
-                                            iconColor = '#10b981';
-                                        } else if (isSelected) {
-                                            borderStyle = '2px solid #ef4444';
-                                            bgStyle = 'rgba(239, 68, 68, 0.15)';
-                                            iconColor = '#ef4444';
-                                        }
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+                            {activeDpq.options.map((optText, idx) => {
+                                const isSelected = selectedDpqOption === idx;
+                                
+                                // Styling depending on submission status
+                                let borderStyle = '1px solid var(--border-glass)';
+                                let bgStyle = 'rgba(0,0,0,0.3)';
+                                let iconColor = 'var(--text-muted)';
+                                
+                                if (isDpqSubmitted) {
+                                    if (idx === activeDpq.correctOption) {
+                                        borderStyle = '2px solid #10b981';
+                                        bgStyle = 'rgba(16, 185, 129, 0.15)';
+                                        iconColor = '#10b981';
                                     } else if (isSelected) {
-                                        borderStyle = '2px solid #3b82f6';
-                                        bgStyle = 'rgba(59, 130, 246, 0.15)';
-                                        iconColor = '#3b82f6';
+                                        borderStyle = '2px solid #ef4444';
+                                        bgStyle = 'rgba(239, 68, 68, 0.15)';
+                                        iconColor = '#ef4444';
                                     }
+                                } else if (isSelected) {
+                                    borderStyle = '2px solid #3b82f6';
+                                    bgStyle = 'rgba(59, 130, 246, 0.15)';
+                                    iconColor = '#3b82f6';
+                                }
 
-                                    return (
-                                        <div 
-                                            key={idx}
-                                            onClick={() => { if (!isDpqSubmitted) setSelectedDpqOptions({0: idx}); }}
-                                            style={{
-                                                padding: '16px 20px',
-                                                borderRadius: '12px',
-                                                background: bgStyle,
-                                                border: borderStyle,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '12px',
-                                                cursor: isDpqSubmitted ? 'default' : 'pointer',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            <div style={{
-                                                width: '20px',
-                                                height: '20px',
-                                                borderRadius: '50%',
-                                                border: isSelected || (isDpqSubmitted && idx === activeDpq.correctOption) ? `6px solid ${iconColor}` : '2px solid var(--text-muted)',
-                                                background: 'transparent',
-                                                flexShrink: 0
-                                            }} />
-                                            <span style={{ fontSize: '1.05rem', color: isSelected || (isDpqSubmitted && idx === activeDpq.correctOption) ? 'white' : 'var(--text-main)' }}>
-                                                {optText}
-                                            </span>
-                                            {isDpqSubmitted && idx === activeDpq.correctOption && (
-                                                <i className="fas fa-check-circle" style={{ marginLeft: 'auto', color: '#10b981', fontSize: '1.2rem' }}></i>
-                                            )}
-                                            {isDpqSubmitted && isSelected && idx !== activeDpq.correctOption && (
-                                                <i className="fas fa-times-circle" style={{ marginLeft: 'auto', color: '#ef4444', fontSize: '1.2rem' }}></i>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+                                return (
+                                    <div 
+                                        key={idx}
+                                        onClick={() => { if (!isDpqSubmitted) setSelectedDpqOption(idx); }}
+                                        style={{
+                                            padding: '16px 20px',
+                                            borderRadius: '12px',
+                                            background: bgStyle,
+                                            border: borderStyle,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            cursor: isDpqSubmitted ? 'default' : 'pointer',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: '20px',
+                                            height: '20px',
+                                            borderRadius: '50%',
+                                            border: isSelected || (isDpqSubmitted && idx === activeDpq.correctOption) ? `6px solid ${iconColor}` : '2px solid var(--text-muted)',
+                                            background: 'transparent',
+                                            flexShrink: 0
+                                        }} />
+                                        <span style={{ fontSize: '1.05rem', color: isSelected || (isDpqSubmitted && idx === activeDpq.correctOption) ? 'white' : 'var(--text-main)' }}>
+                                            {optText}
+                                        </span>
+                                        {isDpqSubmitted && idx === activeDpq.correctOption && (
+                                            <i className="fas fa-check-circle" style={{ marginLeft: 'auto', color: '#10b981', fontSize: '1.2rem' }}></i>
+                                        )}
+                                        {isDpqSubmitted && isSelected && idx !== activeDpq.correctOption && (
+                                            <i className="fas fa-times-circle" style={{ marginLeft: 'auto', color: '#ef4444', fontSize: '1.2rem' }}></i>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
 
                         {/* Solution section / Submit button */}
                         {isDpqSubmitted ? (
                             <div className="animate-fade-in" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)', padding: '24px', borderRadius: '16px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                                    <h4 style={{ color: '#10b981', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem' }}>
-                                        <i className="fas fa-check-circle"></i> Assessment Complete
-                                    </h4>
-                                    <button 
-                                        onClick={() => {
-                                            setIsDpqSubmitted(false);
-                                            setSelectedDpqOptions({});
-                                        }}
-                                        className="btn-secondary animate-pulse" 
-                                        style={{ padding: '8px 16px', fontSize: '0.9rem', borderRadius: '8px', border: '1px solid #10b981', color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', cursor: 'pointer' }}
-                                    >
-                                        <i className="fas fa-redo" style={{ marginRight: '6px' }}></i> Reattempt
-                                    </button>
-                                </div>
                                 <h4 style={{ color: '#60a5fa', fontSize: '0.95rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '700' }}>
                                     <i className="fas fa-lightbulb"></i> Concept & Solution Explanation:
                                 </h4>
                                 <p style={{ color: 'var(--text-main)', fontSize: '1rem', lineHeight: '1.5', margin: 0 }}>
-                                    {activeDpq.solutionExplanation || 'Completed.'}
+                                    {activeDpq.solutionExplanation}
                                 </p>
-                                {activeDpq.ansUrl && (
-                                    <div style={{ marginTop: '16px' }}>
-                                        <a href={activeDpq.ansUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{ padding: '8px 16px', display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: '#10b981', border: '1px solid #10b981' }}>
-                                            <i className="fas fa-key"></i> View Official Answer Key
-                                        </a>
-                                    </div>
-                                )}
                             </div>
                         ) : (
                             <button 
@@ -1745,7 +1698,7 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                                 className="btn-primary"
                                 style={{ width: '100%', padding: '16px', fontSize: '1.1rem', justifyContent: 'center', background: 'var(--secondary-gradient)', boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' }}
                             >
-                                {activeDpq.options && activeDpq.options.length > 0 ? 'Submit Answer' : 'Mark as Completed'}
+                                Submit Answer
                             </button>
                         )}
                     </div>
@@ -1903,57 +1856,30 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                                         </div>
                                     </div>
 
-                                    {/* Action Buttons */}
-                                    <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-                                        {paper.url && (
-                                            <a
-                                                href={paper.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{
-                                                    flex: 1,
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                                                    padding: '12px 16px',
-                                                    borderRadius: '10px',
-                                                    background: `linear-gradient(135deg, ${paper.color} 0%, ${paper.color}cc 100%)`,
-                                                    color: 'white',
-                                                    textDecoration: 'none',
-                                                    fontWeight: '700',
-                                                    fontSize: '0.85rem',
-                                                    transition: 'all 0.2s',
-                                                    boxShadow: `0 4px 15px ${paper.color}30`
-                                                }}
-                                                onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 6px 20px ${paper.color}50`; }}
-                                                onMouseOut={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow=`0 4px 15px ${paper.color}30`; }}
-                                            >
-                                                <i className="fas fa-file-alt"></i> Questions
-                                            </a>
-                                        )}
-                                        {paper.ansUrl && (
-                                            <a
-                                                href={paper.ansUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{
-                                                    flex: 1,
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                                                    padding: '12px 16px',
-                                                    borderRadius: '10px',
-                                                    background: 'rgba(255,255,255,0.1)',
-                                                    border: '1px solid rgba(255,255,255,0.2)',
-                                                    color: 'white',
-                                                    textDecoration: 'none',
-                                                    fontWeight: '700',
-                                                    fontSize: '0.85rem',
-                                                    transition: 'all 0.2s',
-                                                }}
-                                                onMouseOver={e => { e.currentTarget.style.background='rgba(255,255,255,0.15)'; e.currentTarget.style.transform='translateY(-2px)'; }}
-                                                onMouseOut={e => { e.currentTarget.style.background='rgba(255,255,255,0.1)'; e.currentTarget.style.transform='translateY(0)'; }}
-                                            >
-                                                <i className="fas fa-key"></i> Solutions
-                                            </a>
-                                        )}
-                                    </div>
+                                    {/* Action Button */}
+                                    <a
+                                        href={paper.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            display:'flex', alignItems:'center', justifyContent:'center', gap:'10px',
+                                            padding:'14px 20px',
+                                            borderRadius:'12px',
+                                            background:`linear-gradient(135deg, ${paper.color} 0%, ${paper.color}cc 100%)`,
+                                            color:'white',
+                                            textDecoration:'none',
+                                            fontWeight:'700',
+                                            fontSize:'0.95rem',
+                                            transition:'all 0.2s',
+                                            boxShadow:`0 4px 20px ${paper.color}30`,
+                                            marginTop:'4px'
+                                        }}
+                                        onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 8px 30px ${paper.color}50`; }}
+                                        onMouseOut={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow=`0 4px 20px ${paper.color}30`; }}
+                                    >
+                                        <i className="fas fa-arrow-up-right-from-square"></i>
+                                        Access {paper.year} Papers
+                                    </a>
                                 </div>
                             ))}
                         </div>

@@ -595,9 +595,16 @@ function UploadedExamTaking({ exam, currentUser, onFinish, onLogout, retrospecti
                                 <img src={exam.fileUrl} alt="Exam Paper" style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px' }} />
                             </div>
                         ) : (
-                            <iframe src={exam.fileUrl} style={{ width: '100%', height: '100%', border: 'none', flex: 1, background: '#fff' }} title="Exam Paper" />
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ padding: '8px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
+                                    <span style={{ color: '#64748b', fontSize: '0.9rem' }}>If the PDF doesn't load below:</span>
+                                    <a href={exam.fileUrl} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ padding: '6px 16px', fontSize: '0.85rem', textDecoration: 'none', borderRadius: '20px' }}>
+                                        <i className="fas fa-external-link-alt"></i> Open PDF in New Tab
+                                    </a>
+                                </div>
+                                <iframe src={exam.fileUrl} style={{ width: '100%', height: '100%', border: 'none', flex: 1, background: '#fff' }} title="Exam Paper" />
+                            </div>
                         )}
-                    </div>
                 </div>
 
                 {/* Right side: OMR Bubble Sheet */}
