@@ -1008,7 +1008,7 @@ function Admin({ currentUser, onSettingsChange }) {
                                                                             <i className="fas fa-award" style={{ marginRight: '6px', color: '#f59e0b' }}></i> {exam.totalMarks} pts
                                                                         </td>
                                                                         <td style={{ padding: '16px 20px', color: 'white', fontSize: '0.88rem' }}>
-                                                                            {exam.assignedBatch || 'All Batches'}
+                                                                            {exam.assignedBatches ? exam.assignedBatches.join(', ') : (exam.assignedBatch || 'All Batches')}
                                                                         </td>
                                                                         <td style={{ padding: '16px 20px', color: 'white', fontSize: '0.88rem' }}>
                                                                             <span className="badge badge-success">{examResults.length} submissions</span>
@@ -1124,7 +1124,7 @@ function Admin({ currentUser, onSettingsChange }) {
                                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                                                         <span className="badge" style={{ background: 'rgba(59,130,246,0.2)', color: '#3b82f6' }}>{dpq.subject}</span>
                                                         <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                                            Batch: <strong style={{ color: 'white' }}>{dpq.homeworkForBatch}</strong>
+                                                            Batch: <strong style={{ color: 'white' }}>{dpq.homeworkForBatches ? dpq.homeworkForBatches.join(', ') : dpq.homeworkForBatch}</strong>
                                                         </span>
                                                     </div>
                                                     <p style={{ fontSize: '1.05rem', color: 'white', fontWeight: '600', marginBottom: '12px', lineHeight: '1.4' }}>{dpq.questionText}</p>
@@ -2199,7 +2199,7 @@ function Admin({ currentUser, onSettingsChange }) {
                                                                             </div>
                                                                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexShrink: 0 }}>
                                                                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}><i className="fas fa-calendar-alt" style={{marginRight:'4px'}}></i>{uploadDate}</span>
-                                                                                <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.75rem', padding: '2px 8px' }}>{e.assignedBatch || 'All Batches'}</span>
+                                                                                <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.75rem', padding: '2px 8px' }}>{e.assignedBatches ? e.assignedBatches.join(', ') : (e.assignedBatch || 'All Batches')}</span>
                                                                             </div>
                                                                         </div>
                                                                     );
@@ -2223,7 +2223,7 @@ function Admin({ currentUser, onSettingsChange }) {
                                                                             </div>
                                                                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexShrink: 0 }}>
                                                                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}><i className="fas fa-calendar-alt" style={{marginRight:'4px'}}></i>{uploadDate}</span>
-                                                                                <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.75rem', padding: '2px 8px' }}>{d.homeworkForBatch || 'All Batches'}</span>
+                                                                                <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.75rem', padding: '2px 8px' }}>{d.homeworkForBatches ? d.homeworkForBatches.join(', ') : (d.homeworkForBatch || 'All Batches')}</span>
                                                                             </div>
                                                                         </div>
                                                                     );
@@ -2702,7 +2702,7 @@ function Admin({ currentUser, onSettingsChange }) {
                                                                 </div>
                                                                 <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexShrink: 0 }}>
                                                                     <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}><i className="fas fa-calendar-alt" style={{marginRight:'6px'}}></i>{uploadDate}</span>
-                                                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem', padding: '4px 12px' }}>Batch: {e.assignedBatch || 'All Batches'}</span>
+                                                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem', padding: '4px 12px' }}>Batch: {e.assignedBatches ? e.assignedBatches.join(', ') : (e.assignedBatch || 'All Batches')}</span>
                                                                 </div>
                                                             </div>
                                                         );
@@ -2725,7 +2725,7 @@ function Admin({ currentUser, onSettingsChange }) {
                                                                 </div>
                                                                 <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexShrink: 0 }}>
                                                                     <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}><i className="fas fa-calendar-alt" style={{marginRight:'6px'}}></i>{uploadDate}</span>
-                                                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem', padding: '4px 12px' }}>Batch: {d.homeworkForBatch || 'All Batches'}</span>
+                                                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem', padding: '4px 12px' }}>Batch: {d.homeworkForBatches ? d.homeworkForBatches.join(', ') : (d.homeworkForBatch || 'All Batches')}</span>
                                                                 </div>
                                                             </div>
                                                         );

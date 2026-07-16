@@ -756,7 +756,7 @@ function TeacherDashboard({ currentUser }) {
                                                 <div key={dpq.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', borderRadius: '12px' }}>
                                                     <div style={{ flex: 1, marginRight: '16px' }}>
                                                         <h4 style={{ color: 'white', margin: '0 0 4px 0', fontSize: '1rem', fontWeight: '600', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{dpq.questionText}</h4>
-                                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Target: {dpq.homeworkForBatch} | Solved: {attempts.length} students</span>
+                                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Target: {dpq.homeworkForBatches ? dpq.homeworkForBatches.join(', ') : dpq.homeworkForBatch} | Solved: {attempts.length} students</span>
                                                     </div>
                                                     <button 
                                                         onClick={() => handleDeleteDpq(dpq.id)}

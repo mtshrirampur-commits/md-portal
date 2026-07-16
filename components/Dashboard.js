@@ -22,10 +22,10 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                     api.getUsers()
                 ]);
                 setAllExams(fetchedExams);
-                setExams(fetchedExams.filter(e => e.assignedBatches && e.assignedBatches.includes(currentUser.batch)));
+                setExams(fetchedExams.filter(e => (e.assignedBatches && e.assignedBatches.includes(currentUser.batch)) || e.assignedBatch === currentUser.batch));
                 setAllResults(fetchedResults);
                 setResults(fetchedResults.filter(r => r.studentId === currentUser.id));
-                setDpqs(fetchedDpqs.filter(d => d.homeworkForBatches && d.homeworkForBatches.includes(currentUser.batch)));
+                setDpqs(fetchedDpqs.filter(d => (d.homeworkForBatches && d.homeworkForBatches.includes(currentUser.batch)) || d.homeworkForBatch === currentUser.batch));
                 setDpqAttempts(fetchedAttempts);
                 setPyps(fetchedPyps);
                 setMessages(fetchedMessages || []);
