@@ -22,10 +22,20 @@ function Dashboard({ currentUser, onStartExam, onStartReview }) {
                     api.getUsers()
                 ]);
                 setAllExams(fetchedExams);
-                setExams(fetchedExams.filter(e => e.assignedBatch === currentUser.batch));
+                setExams(fetchedExams.filter(e => {
+                    const batches = e.assignedBatches || [];
+                    if (batches.length === 0 && !e.assignedBatch) return false;
+                    if (e.assignedBatch && e.assignedBatch === currentUser.batch) return true;
+                    return batches.includes(currentUser.batch);
+                }));
                 setAllResults(fetchedResults);
                 setResults(fetchedResults.filter(r => r.studentId === currentUser.id));
-                setDpqs(fetchedDpqs.filter(d => d.homeworkForBatch === currentUser.batch));
+                setDpqs(fetchedDpqs.filter(d => {
+                    const batches = d.homeworkForBatches || [];
+                    if (batches.length === 0 && !d.homeworkForBatch) return false;
+                    if (d.homeworkForBatch && d.homeworkForBatch === currentUser.batch) return true;
+                    return batches.includes(currentUser.batch);
+                }));
                 setDpqAttempts(fetchedAttempts);
                 setPyps(fetchedPyps);
                 setMessages(fetchedMessages || []);
