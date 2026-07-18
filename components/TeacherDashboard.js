@@ -413,6 +413,15 @@ function TeacherDashboard({ currentUser }) {
         e.preventDefault();
 
         // Validate
+        if (questions.length === 0) {
+            if (creationMode === 'upload' && examFileUrl) {
+                alert('Please generate the answer key grid for the uploaded paper.');
+            } else {
+                alert('Please add at least one question to the exam.');
+            }
+            return;
+        }
+
         for (let i = 0; i < questions.length; i++) {
             const q = questions[i];
             if (!q.questionText.trim()) {

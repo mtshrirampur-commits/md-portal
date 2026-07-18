@@ -1345,6 +1345,16 @@ function NTAExamTaking({ exam, currentUser, onFinish, onLogout, retrospectiveRes
 }
 
 window.ExamTaking = function(props) {
+    if (!props.exam.questions || props.exam.questions.length === 0) {
+        return (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'white', background: '#111827', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <i className="fas fa-exclamation-circle" style={{ fontSize: '4rem', color: '#ef4444', marginBottom: '20px' }}></i>
+                <h2>Invalid Exam Configuration</h2>
+                <p style={{ color: '#9ca3af', marginBottom: '20px', fontSize: '1.1rem' }}>This exam has no questions configured. The teacher must generate an answer key or add questions.</p>
+                <button onClick={props.onFinish} className="btn-primary" style={{ padding: '12px 24px', fontSize: '1.1rem' }}>Go Back</button>
+            </div>
+        );
+    }
     if (props.exam && props.exam.fileUrl) {
         return <UploadedExamTaking {...props} />;
     }
