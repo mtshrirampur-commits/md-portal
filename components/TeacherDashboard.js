@@ -459,7 +459,7 @@ function TeacherDashboard({ currentUser }) {
             setNewExamScheduledDateStr('');
             setNewExamScheduledTimeStr('');
             setNewExamDesc('');
-            setNewExamBatch(settings?.batches?.[0] || '');
+            setNewExamBatches([settings?.batches?.[0] || '']);
             setCreationMode('manual');
             setExamFileUrl('');
             setExamFileType('');
